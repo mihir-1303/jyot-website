@@ -4,6 +4,7 @@ const allPermissions: Set<Permission> = new Set([
   "articles.create", "articles.read", "articles.editOwn", "articles.editAll", "articles.publish", "articles.delete",
   "videos.create", "videos.read", "videos.editOwn", "videos.editAll", "videos.publish", "videos.delete",
   "research.create", "research.read", "research.editOwn", "research.editAll", "research.publish", "research.delete",
+  "collections.create", "collections.read", "collections.edit", "collections.publish", "collections.delete",
   "media.upload", "media.read", "media.editMetadata", "media.delete",
   "homepage.view", "homepage.edit", "homepage.publish",
   "authors.create", "authors.read", "authors.edit", "authors.delete",

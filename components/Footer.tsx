@@ -12,7 +12,7 @@ export function Footer({ categories = [] }: { categories?: PublicCategory[] }) {
       <div className="site-footer-top">
         <div className="site-footer-brand"><Link href="/" className="site-footer-wordmark" aria-label="Jyot home">JYOT</Link><p className="site-footer-tagline">Ideas for a More Inclusive Tomorrow.</p></div>
         <div className="site-footer-nav">
-          <div className="site-footer-column"><p className="site-footer-label">Explore</p><Link href="/articles">Articles</Link><Link href="/research">Research</Link><Link href="/videos">Videos</Link></div>
+          <div className="site-footer-column"><p className="site-footer-label">Explore</p><Link href="/articles">Articles</Link><Link href="/research">Research</Link><Link href="/videos">Videos</Link><Link href="/collections">Collections</Link></div>
           {topics.length > 0 && <div className="site-footer-column"><p className="site-footer-label">Topics</p>{topics.map((category) => <Link href={`/articles?category=${encodeURIComponent(category.slug)}`} key={category.slug}>{category.name}</Link>)}</div>}
           <div className="site-footer-column"><p className="site-footer-label">Connect</p><a href="mailto:hello@jyot.org">Contact</a></div>
         </div>

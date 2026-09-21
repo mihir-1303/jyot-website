@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export type EditorialTickerItem = { id: string; category: string; title: string; href: string };
 
@@ -35,5 +36,20 @@ function EditorialTicker({ items }: { items: EditorialTickerItem[] }) {
 
 export function Header({ tickerItems = [] }: { tickerItems?: EditorialTickerItem[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  return <><EditorialTicker items={tickerItems} /><header className="site-header sticky top-0 z-30"><div className="page-shell"><div className="site-header-row"><Link href="/" className="brand" aria-label="Jyot home"><span className="brand-wordmark">JYOT</span><span className="brand-signature">IDEAS<br />PEOPLE<br />PERSPECTIVE</span></Link><nav aria-label="Main navigation" className="desktop-nav">{links.map((link) => <Link href={link.href} key={link.label}>{link.label}</Link>)}</nav><div className="header-actions"><Link href="/search" aria-label="Search Jyot" className="search-action"><SearchIcon /><span>Search</span></Link><a href="#footer" className="subscribe-button">Subscribe</a><button type="button" className="menu-button" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((open) => !open)}><MenuIcon open={menuOpen} /></button></div></div><nav id="mobile-navigation" aria-label="Mobile navigation" className={`mobile-nav ${menuOpen ? "mobile-nav-open" : ""}`}>{links.map((link) => <Link href={link.href} key={link.label} onClick={() => setMenuOpen(false)}>{link.label}</Link>)}</nav></div></header></>;
+  const pathname = usePathname();
+  const [scrolled, setScrolled] = useState(false);
+  const active = (href: string) => href !== "#footer" && (pathname === href || pathname.startsWith(`${href}/`));
+  useEffect(() => {
+    const updateScrollState = () => setScrolled(window.scrollY > 12);
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+    return () => window.removeEventListener("scroll", updateScrollState);
+  }, []);
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
+  const navClass = (href: string) => active(href) ? "nav-link-active" : undefined;
+  return <><EditorialTicker items={tickerItems} /><header className={`site-header sticky top-0 z-30 ${scrolled ? "site-header-scrolled" : ""}`}><div className="page-shell"><div className="site-header-row"><Link href="/" className="brand" aria-label="Jyot home"><span className="brand-wordmark">JYOT</span><span className="brand-signature">IDEAS<br />PEOPLE<br />PERSPECTIVE</span></Link><nav aria-label="Main navigation" className="desktop-nav">{links.map((link) => <Link href={link.href} className={navClass(link.href)} key={link.label}>{link.label}</Link>)}</nav><div className="header-actions"><Link href="/search" aria-label="Search Jyot" className={`search-action ${navClass("/search") ?? ""}`}><SearchIcon /><span>Search</span></Link><a href="#footer" className="subscribe-button">Subscribe</a><button type="button" className="menu-button" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((open) => !open)}><MenuIcon open={menuOpen} /></button></div></div><nav id="mobile-navigation" aria-label="Mobile navigation" aria-hidden={!menuOpen} className={`mobile-nav ${menuOpen ? "mobile-nav-open" : ""}`}>{links.map((link) => <Link href={link.href} className={navClass(link.href)} tabIndex={menuOpen ? 0 : -1} key={link.label} onClick={() => setMenuOpen(false)}>{link.label}</Link>)}<Link href="/search" className={navClass("/search")} tabIndex={menuOpen ? 0 : -1} onClick={() => setMenuOpen(false)}><SearchIcon /> Search</Link><a href="#footer" tabIndex={menuOpen ? 0 : -1} onClick={() => setMenuOpen(false)}>Subscribe</a></nav></div></header></>;
 }

@@ -3,7 +3,7 @@ export type Id = string;
 export const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "VIEWER", "CONTRIBUTOR"] as const;
 export type Role = (typeof ROLES)[number];
 
-export const RESOURCES = ["articles", "videos", "research", "media", "homepage", "authors", "categories", "tags", "users", "roles", "settings"] as const;
+export const RESOURCES = ["articles", "videos", "research", "collections", "media", "homepage", "authors", "categories", "tags", "users", "roles", "settings"] as const;
 export type Resource = (typeof RESOURCES)[number];
 export type PermissionAction = "create" | "read" | "edit" | "editOwn" | "editAll" | "publish" | "delete" | "upload" | "editMetadata" | "view" | "disable";
 export type Permission = `${Resource}.${PermissionAction}`;
@@ -28,6 +28,8 @@ export type ContentBase = AuditFields & { id: Id; title: string; slug: string; s
 export type Article = ContentBase & { excerpt: string; content: unknown; coverMedia: Id; author: Id; category: Id; tags: Id[]; readTime?: string };
 export type Video = ContentBase & { description: string; thumbnail: Id; sourceType: "external" | "r2"; provider?: "youtube" | "vimeo" | "other"; externalUrl?: string; media?: Id; duration?: string; author?: Id; category: Id };
 export type Research = ContentBase & { description: string; content: unknown; coverMedia: Id; pdfMedia?: Id; authors: Id[]; category: Id; type: string };
+export type CollectionItem = { type: "article" | "research" | "video"; contentId: Id; order: number };
+export type Collection = ContentBase & { description: string; coverImage?: Id; curator?: Id; items: CollectionItem[] };
 
 export type SectionContent = { mode: "manual"; ids: Id[] } | { mode: "latest"; limit: number; categoryId?: Id; tagIds?: Id[] };
 export type HomepageSection =

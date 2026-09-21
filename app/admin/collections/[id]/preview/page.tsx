@@ -1,0 +1,8 @@
+import { notFound } from "next/navigation";
+import { CollectionStoryList } from "../../../../../components/CollectionStoryList";
+import { EditorialImage } from "../../../../../components/EditorialImage";
+import { getCollectionPreviewById } from "../../../../../lib/data/public";
+import { requirePermission } from "../../../../../lib/permissions";
+
+export const metadata = { robots: { index: false, follow: false } };
+export default async function CollectionPreviewPage({ params }: { params: Promise<{ id: string }> }) { await requirePermission("collections.read"); const collection = await getCollectionPreviewById((await params).id); if (!collection) notFound(); return <><div className="border-b bg-[#17202b] px-8 py-4 text-white"><strong>Collection draft preview</strong><a className="ml-6 underline" href={`/admin/collections/${collection.id}/edit`}>Back to editor</a></div><main className="collection-page page-shell section"><p className="eyebrow">Draft preview · Collection / Series</p><h1 className="serif collection-title">{collection.title}</h1><p className="collection-description">{collection.description}</p>{collection.coverImage && <div className="collection-cover"><EditorialImage src={collection.coverImage} alt={collection.title} priority /></div>}<section className="collection-stories"><div className="listing-section-heading"><p className="eyebrow">The series</p><h2 className="serif">Stories</h2></div>{collection.items.length ? <CollectionStoryList items={collection.items} /> : <p className="listing-empty">This collection has no currently published stories.</p>}</section></main></>; }

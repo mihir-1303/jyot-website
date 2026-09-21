@@ -5,6 +5,8 @@ import { JsonLd } from "../../../components/JsonLd";
 import { StructuredContent } from "../../../components/StructuredContent";
 import { getPublishedArticleBySlug, getPublishedArticles } from "../../../lib/data/public";
 import { canonical, editorialMetadata } from "../../../lib/seo";
+import { CollectionNavigation } from "../../../components/CollectionNavigation";
+import { getCollectionNavigation } from "../../../lib/data/public";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -27,6 +29,7 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   const data = { "@context": "https://schema.org", "@type": "Article", headline: item.title, description: item.excerpt, image: item.featuredImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: { "@type": "Person", name: item.author.name }, articleSection: item.category.name, mainEntityOfPage: canonical(`/articles/${item.slug}`) };
+  const collectionNavigation = await getCollectionNavigation("article", item.id);
   const publishedDate = new Date(item.publishedAt).toLocaleDateString("en-US", { dateStyle: "long" });
 
   return <main className="article-page page-shell section">
@@ -49,6 +52,6 @@ export default async function ArticlePage({ params }: Props) {
         {item.readTime && <p className="meta article-read-time">{item.readTime}</p>}
       </aside>
     </div>
-    {related.length > 0 && <section className="article-related" aria-labelledby="related-articles"><div className="article-related-heading"><p className="eyebrow">Continue reading</p><h2 id="related-articles" className="serif">Related Articles</h2></div><div className="article-related-grid">{related.map((article) => <ArticleCard article={article} compact key={article.id} />)}</div></section>}
+    {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}{related.length > 0 && <section className="article-related" aria-labelledby="related-articles"><div className="article-related-heading"><p className="eyebrow">Continue reading</p><h2 id="related-articles" className="serif">Related Articles</h2></div><div className="article-related-grid">{related.map((article) => <ArticleCard article={article} compact key={article.id} />)}</div></section>}
   </main>;
 }

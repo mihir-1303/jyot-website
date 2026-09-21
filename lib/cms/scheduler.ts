@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { Article, Research, Video } from "../db/models";
+import { Article, Collection, Research, Video } from "../db/models";
 import { connectToDatabase } from "../db/mongodb";
 const batchLimit = 25;
-const jobs = [{ type: "article", Model: Article, list: "/articles" }, { type: "video", Model: Video, list: "/videos" }, { type: "research", Model: Research, list: "/research" }] as const;
+const jobs = [{ type: "article", Model: Article, list: "/articles" }, { type: "video", Model: Video, list: "/videos" }, { type: "research", Model: Research, list: "/research" }, { type: "collection", Model: Collection, list: "/collections" }] as const;
 export async function publishScheduledContent(now = new Date(), limit = batchLimit) { await connectToDatabase(); const published: string[] = []; for (const job of jobs) { for (let index = 0; index < Math.min(limit, batchLimit); index += 1) { try { const item = await job.Model.findOneAndUpdate({ status: "scheduled", scheduledAt: { $lte: now } }, { $set: { status: "published", publishedAt: now, publishedBySystem: true }, $unset: { scheduledAt: "" } }, { sort: { scheduledAt: 1, _id: 1 }, new: true }).select("slug").lean() as unknown as { slug: string } | null; if (!item) break; published.push(`${job.type}:${item.slug}`); revalidatePath("/"); revalidatePath(job.list); revalidatePath(`${job.list}/${item.slug}`); } catch (error) { console.error(`Scheduled ${job.type} publication failed`, error instanceof Error ? error.message : "unknown error"); break; } } } if (published.length) revalidatePath("/sitemap.xml"); return { published, count: published.length }; }

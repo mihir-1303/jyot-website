@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { DeleteButton } from "../../../components/cms/DeleteButton";
+import { deleteAuthor } from "../../../lib/cms/author-actions";
+import { getAdminAuthors } from "../../../lib/data/admin";
+import { requirePermission } from "../../../lib/permissions";
+
+export default async function AuthorsPage() { await requirePermission("authors.read"); const authors = await getAdminAuthors() as unknown as { _id: unknown; name: string; slug: string; bio?: string }[]; return <main><div className="flex items-center justify-between gap-4"><div><p className="eyebrow">CMS</p><h1 className="serif mt-2 text-5xl">Authors</h1></div><Link className="bg-[var(--orange)] px-4 py-3 font-bold text-white" href="/admin/authors/new">New author</Link></div>{authors.length === 0 ? <p className="mt-8 text-[var(--muted)]">No authors have been added yet.</p> : <div className="mt-8 grid gap-4 md:grid-cols-2">{authors.map((author) => <div className="border bg-white p-5" key={String(author._id)}><p className="serif text-2xl">{author.name}</p><p className="meta mt-2">/{author.slug}</p>{author.bio && <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{author.bio}</p>}<div className="mt-5 flex gap-4 border-t pt-3 text-sm"><Link className="text-[var(--orange)]" href={`/admin/authors/${author._id}/edit`}>Edit</Link><DeleteButton action={async () => { "use server"; await deleteAuthor(String(author._id)); }} /></div></div>)}</div>}</main>; }

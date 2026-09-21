@@ -1,0 +1,4 @@
+import { getAdminContent } from "../../../../../lib/data/admin";
+import { requirePermission } from "../../../../../lib/permissions";
+import { StructuredContent } from "../../../../../components/StructuredContent";
+export default async function ResearchPreview({ params }: { params: Promise<{ id: string }> }) { await requirePermission("research.read"); const item = await getAdminContent("research", (await params).id) as Record<string, unknown> | null; if (!item) return <p>Research not found.</p>; return <main className="page-shell section max-w-4xl"><p className="eyebrow">Draft preview</p><h1 className="serif mt-4 text-5xl md:text-7xl">{String(item.title)}</h1><p className="mt-6 text-lg text-[var(--muted)]">{String(item.description ?? "")}</p><div className="mt-12"><StructuredContent content={item.content} /></div></main>; }

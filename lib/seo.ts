@@ -1,0 +1,6 @@
+import type { Metadata } from "next";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export const SEO = { siteName: "Jyot", siteDescription: "Ideas, people and policies shaping a more inclusive, sustainable and peaceful future.", siteUrl, defaultImage: `${siteUrl}/og-default.svg` };
+export const canonical = (path = "/") => `${SEO.siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+export function editorialMetadata(input: { title: string; description?: string; path: string; image?: string; type?: "article" | "video" }) : Metadata { const image = input.image || SEO.defaultImage; return { title: `${input.title} | ${SEO.siteName}`, description: input.description || SEO.siteDescription, alternates: { canonical: canonical(input.path) }, openGraph: { title: input.title, description: input.description || SEO.siteDescription, url: canonical(input.path), siteName: SEO.siteName, type: input.type === "article" ? "article" : "website", images: [{ url: image, width: 1600, height: 900 }] }, twitter: { card: "summary_large_image", title: input.title, description: input.description || SEO.siteDescription, images: [image] } }; }
+export const noIndex: Metadata = { robots: { index: false, follow: false } };

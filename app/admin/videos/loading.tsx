@@ -1,0 +1,1 @@
+export default function LoadingVideos() { return <main><p className="eyebrow">CMS</p><h1 className="serif mt-2 text-5xl">Videos</h1><p className="mt-8 text-[var(--muted)]">Loading videos…</p></main>; }

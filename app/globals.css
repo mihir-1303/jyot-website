@@ -270,7 +270,7 @@ img { max-width: 100%; }
 .hero-stage { position: relative; isolation: isolate; overflow: hidden; }
 .hero-track { display: flex; transition: transform .65s ease; }
 .hero-track-no-transition { transition: none; }
-.hero-slide { display: grid; flex: 0 0 100%; height: clamp(25rem, 45vh, 28rem); grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); }
+.hero-slide { display: grid; flex: 0 0 100%; min-height: clamp(25rem, 45vh, 28rem); grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr); }
 .hero-pagination { display: flex; justify-content: center; gap: .45rem; margin-top: 1rem; }
 .hero-dot { width: .45rem; height: .45rem; border: 1px solid var(--foreground); border-radius: 999px; background: transparent; padding: 0; opacity: .42; transition: opacity .2s ease, transform .2s ease, background-color .2s ease; }
 .hero-dot:hover, .hero-dot:focus-visible { opacity: .8; }
@@ -281,10 +281,10 @@ img { max-width: 100%; }
 .hero-image-link .editorial-thumbnail { display: flex; align-items: center; justify-content: center; background: #e9e6e0; }
 .hero-image-link .editorial-thumbnail img { object-fit: contain; }
 .hero-image-link:hover .editorial-thumbnail img, .hero-image-link:focus-visible .editorial-thumbnail img { transform: none; }
-.hero-story-card { position: relative; z-index: 1; display: flex; width: auto; min-height: 0; height: 100%; flex-direction: column; justify-content: center; overflow: hidden; background: #e9e6e0; padding: clamp(1.5rem, 3vw, 2.75rem) clamp(1.5rem, 3.25vw, 3.5rem); }
+.hero-story-card { position: relative; z-index: 1; display: flex; width: auto; min-height: 100%; height: auto; flex-direction: column; justify-content: center; overflow: visible; background: #e9e6e0; padding: clamp(1.5rem, 3vw, 2.75rem) clamp(1.5rem, 3.25vw, 3.5rem); }
 .hero-story-label { margin-bottom: .65rem; color: var(--orange); }
 .hero-story-date { margin-bottom: 1.25rem; }
-.hero-story-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 4; color: var(--foreground); font-size: clamp(1.9rem, 3.6vw, 4rem); font-weight: 700; letter-spacing: -.055em; line-height: .98; }
+.hero-story-title { color: var(--foreground); font-size: clamp(1.9rem, 3.6vw, 4rem); font-weight: 700; letter-spacing: -.055em; line-height: .98; }
 .hero-story-excerpt { display: -webkit-box; max-width: 30rem; margin-top: 1.2rem; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; color: var(--muted); font-size: clamp(.85rem, 1.1vw, 1rem); line-height: 1.55; }
 .hero-story-action { display: inline-flex; width: fit-content; align-items: center; gap: .7rem; margin-top: 1.8rem; border-bottom: 1px solid var(--orange); padding-bottom: .45rem; color: var(--foreground); font-size: .63rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; transition: color .2s ease; }
 .hero-story-action:hover { color: var(--orange); }
@@ -297,7 +297,7 @@ img { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) { .hero-track { transition: none; } .hero-dot { transition: none; } }
 @media (max-width: 1023px) {
   .homepage-hero-inner { width: min(91.5vw, 1000px); }
-  .hero-slide { height: clamp(24rem, 55vh, 27rem); grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .hero-slide { min-height: clamp(24rem, 55vh, 27rem); grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   .hero-story-card { padding: 1.5rem 2.25rem; }
   .hero-story-title { font-size: clamp(1.6rem, 3.3vw, 2.5rem); }
 }
@@ -305,12 +305,12 @@ img { max-width: 100%; }
   .homepage-hero { margin-bottom: 2rem; padding: 1rem 0 2.5rem; }
   .homepage-hero-inner { width: min(91vw, 640px); }
   .hero-stage { display: flex; flex-direction: column; }
-  .hero-slide { display: block; height: auto; }
+  .hero-slide { display: block; min-height: 0; }
   .hero-image-link, .hero-image-link .editorial-thumbnail { height: auto; }
   .hero-image-link .editorial-thumbnail { aspect-ratio: 16 / 9; }
-  .hero-story-card { width: calc(100% - 1.25rem); height: 17.5rem; min-height: 0; margin: -2.25rem 0 0 1.25rem; padding: 1.25rem 1.25rem 1.35rem; }
+  .hero-story-card { width: calc(100% - 1.25rem); height: auto; min-height: 17.5rem; margin: -2.25rem 0 0 1.25rem; padding: 1.25rem 1.25rem 1.35rem; }
   .hero-story-date { margin-bottom: .9rem; }
-  .hero-story-title { -webkit-line-clamp: 3; font-size: clamp(1.8rem, 8vw, 2.8rem); }
+  .hero-story-title { font-size: clamp(1.8rem, 8vw, 2.8rem); }
   .hero-story-excerpt { -webkit-line-clamp: 2; margin-top: .9rem; font-size: .87rem; }
   .hero-story-action { margin-top: 1.35rem; }
   .hero-pagination { margin-top: 1rem; }

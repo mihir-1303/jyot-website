@@ -1,12 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import HeaderInteractive from "./HeaderInteractive";
 
 export type EditorialTickerItem = { id: string; category: string; title: string; href: string };
+export type HeaderLink = { href: string; label: string };
 
-const links = [
+const links: HeaderLink[] = [
   { href: "/research", label: "Research" },
   { href: "/articles", label: "Articles" },
   { href: "/videos", label: "Videos" },
@@ -16,10 +14,6 @@ const links = [
 
 function SearchIcon() {
   return <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" strokeLinecap="round" /></svg>;
-}
-
-function MenuIcon({ open }: { open: boolean }) {
-  return <span className="relative block h-4 w-5" aria-hidden="true"><span className={`absolute left-0 top-1 block h-px w-5 bg-current transition-transform ${open ? "translate-y-1.5 rotate-45" : ""}`} /><span className={`absolute left-0 top-2.5 block h-px w-5 bg-current transition-opacity ${open ? "opacity-0" : ""}`} /><span className={`absolute left-0 top-4 block h-px w-5 bg-current transition-transform ${open ? "-translate-y-1.5 -rotate-45" : ""}`} /></span>;
 }
 
 function EditorialTicker({ items }: { items: EditorialTickerItem[] }) {
@@ -35,21 +29,5 @@ function EditorialTicker({ items }: { items: EditorialTickerItem[] }) {
 }
 
 export function Header({ tickerItems = [] }: { tickerItems?: EditorialTickerItem[] }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
-  const active = (href: string) => href !== "#footer" && (pathname === href || pathname.startsWith(`${href}/`));
-  useEffect(() => {
-    const updateScrollState = () => setScrolled(window.scrollY > 12);
-    updateScrollState();
-    window.addEventListener("scroll", updateScrollState, { passive: true });
-    return () => window.removeEventListener("scroll", updateScrollState);
-  }, []);
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, []);
-  const navClass = (href: string) => active(href) ? "nav-link-active" : undefined;
-  return <><EditorialTicker items={tickerItems} /><header className={`site-header sticky top-0 z-30 ${scrolled ? "site-header-scrolled" : ""}`}><div className="page-shell"><div className="site-header-row"><Link href="/" className="brand" aria-label="Jyot home"><span className="brand-wordmark">JYOT</span><span className="brand-signature">IDEAS<br />PEOPLE<br />PERSPECTIVE</span></Link><nav aria-label="Main navigation" className="desktop-nav">{links.map((link) => <Link href={link.href} className={navClass(link.href)} key={link.label}>{link.label}</Link>)}</nav><div className="header-actions"><Link href="/search" aria-label="Search Jyot" className={`search-action ${navClass("/search") ?? ""}`}><SearchIcon /><span>Search</span></Link><a href="#footer" className="subscribe-button">Subscribe</a><button type="button" className="menu-button" aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((open) => !open)}><MenuIcon open={menuOpen} /></button></div></div><nav id="mobile-navigation" aria-label="Mobile navigation" aria-hidden={!menuOpen} className={`mobile-nav ${menuOpen ? "mobile-nav-open" : ""}`}>{links.map((link) => <Link href={link.href} className={navClass(link.href)} tabIndex={menuOpen ? 0 : -1} key={link.label} onClick={() => setMenuOpen(false)}>{link.label}</Link>)}<Link href="/search" className={navClass("/search")} tabIndex={menuOpen ? 0 : -1} onClick={() => setMenuOpen(false)}><SearchIcon /> Search</Link><a href="#footer" tabIndex={menuOpen ? 0 : -1} onClick={() => setMenuOpen(false)}>Subscribe</a></nav></div></header></>;
+  return <><EditorialTicker items={tickerItems} /><header data-site-header className="site-header sticky top-0 z-30"><div className="page-shell"><HeaderInteractive links={links} actions={<><Link href="/search" aria-label="Search Jyot" className="search-action" data-header-nav data-nav-href="/search"><SearchIcon /><span>Search</span></Link><a href="#footer" className="subscribe-button">Subscribe</a></>}><Link href="/" className="brand" aria-label="Jyot home"><span className="brand-wordmark">JYOT</span><span className="brand-signature">IDEAS<br />PEOPLE<br />PERSPECTIVE</span></Link><nav aria-label="Main navigation" className="desktop-nav">{links.map((link) => <Link href={link.href} data-header-nav data-nav-href={link.href} key={link.label}>{link.label}</Link>)}</nav></HeaderInteractive></div></header></>;
 }

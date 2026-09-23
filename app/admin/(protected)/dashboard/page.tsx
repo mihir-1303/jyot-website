@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getCurrentUser } from "../../../lib/auth";
-import { getDashboardStats } from "../../../lib/data/admin";
+import { getCurrentUser } from "../../../../lib/auth";
+import { getDashboardStats } from "../../../../lib/data/admin";
 
 const statusClass: Record<string, string> = { draft: "admin-status admin-status-draft", published: "admin-status admin-status-published", scheduled: "admin-status admin-status-scheduled" };
 const date = (value?: Date) => value ? new Date(value).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—";

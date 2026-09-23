@@ -3,10 +3,12 @@ import { ArticleCard } from "../../../components/ArticleCard";
 import { EditorialImage } from "../../../components/EditorialImage";
 import { JsonLd } from "../../../components/JsonLd";
 import { StructuredContent } from "../../../components/StructuredContent";
-import { getPublishedArticleBySlug, getPublishedArticles } from "../../../lib/data/public";
+import { getCollectionNavigation, getPublishedArticleBySlug, getRelatedPublishedArticles } from "../../../lib/data/public";
 import { canonical, editorialMetadata } from "../../../lib/seo";
 import { CollectionNavigation } from "../../../components/CollectionNavigation";
-import { getCollectionNavigation } from "../../../lib/data/public";
+import { Breadcrumbs } from "../../../components/Breadcrumbs";
+import { EditorialHeader } from "../../../components/EditorialHeader";
+import { articleToEditorialContent } from "../../../lib/editorial";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -19,28 +21,19 @@ export default async function ArticlePage({ params }: Props) {
   const item = await getPublishedArticleBySlug((await params).slug);
   if (!item) notFound();
 
-  let related = [] as Awaited<ReturnType<typeof getPublishedArticles>>;
-  try {
-    const articles = await getPublishedArticles();
-    related = articles.filter((article) => article.slug !== item.slug && article.category.slug === item.category.slug).slice(0, 3);
-    if (related.length < 3) related = [...related, ...articles.filter((article) => article.slug !== item.slug && !related.some((relatedArticle) => relatedArticle.slug === article.slug)).slice(0, 3 - related.length)];
-  } catch {
-    related = [];
-  }
-
   const data = { "@context": "https://schema.org", "@type": "Article", headline: item.title, description: item.excerpt, image: item.featuredImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: { "@type": "Person", name: item.author.name }, articleSection: item.category.name, mainEntityOfPage: canonical(`/articles/${item.slug}`) };
-  const collectionNavigation = await getCollectionNavigation("article", item.id);
-  const publishedDate = new Date(item.publishedAt).toLocaleDateString("en-US", { dateStyle: "long" });
+  const [related, collectionNavigation] = await Promise.all([
+    getRelatedPublishedArticles(item.id, item.category.id).catch(() => []),
+    getCollectionNavigation("article", item.id),
+  ]);
+  const editorial = articleToEditorialContent(item);
 
   return <main className="article-page page-shell section">
+    <Breadcrumbs items={[{ label: "Articles", href: "/articles" }, { label: item.title }]} />
     <JsonLd data={data} />
     <div className="article-layout">
       <article className="article-main">
-        <header className="article-header">
-          <div className="article-kicker"><p className="eyebrow">{item.category.name}</p><span className="article-kicker-rule" aria-hidden="true" /><p className="meta">{publishedDate}</p></div>
-          <h1 className="serif article-title">{item.title}</h1>
-          {item.excerpt && <p className="article-deck">{item.excerpt}</p>}
-        </header>
+        <EditorialHeader content={editorial} showByline={false} />
         <div className="article-hero"><EditorialImage src={item.featuredImage} alt={item.featuredImage.altText || item.title} priority /></div>
         <div className="article-body"><StructuredContent content={item.content} /></div>
       </article>

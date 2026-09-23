@@ -1,4 +1,4 @@
-export type PublicMediaAsset = { id: string; url: string; altText: string; caption?: string; width?: number; height?: number };
+export type PublicMediaAsset = { id: string; url: string; altText: string; caption?: string; width?: number; height?: number; originalUrl?: string; originalWidth?: number; originalHeight?: number };
 export type PublicAuthor = { id: string; name: string; slug: string; bio?: string };
 export type PublicCategory = { id: string; name: string; slug: string; description?: string };
 export type PublicArticle = { id: string; title: string; slug: string; excerpt: string; content: unknown; featuredImage: PublicMediaAsset; author: PublicAuthor; category: PublicCategory; tags: string[]; status: "published"; featured: boolean; publishedAt: string; createdAt: string; updatedAt: string; readTime?: string };
@@ -8,4 +8,4 @@ export type PublicCollectionItem = { type: "article" | "research" | "video"; tit
 export type PublicCollection = { id: string; title: string; slug: string; description: string; coverImage?: PublicMediaAsset; curator?: PublicAuthor; items: PublicCollectionItem[]; publishedAt: string; updatedAt: string; seo?: { metaTitle?: string; metaDescription?: string } };
 export type PublicCollectionSummary = Omit<PublicCollection, "items"> & { itemCount: number };
 export type PublicSection = { id: string; type: "hero" | "featured" | "articles" | "videos" | "research" | "research-explorer" | "topic" | "collection"; title: string; enabled: boolean; order: number; content?: { mode: "manual" | "latest"; ids?: string[]; limit?: number; categoryId?: string; tagIds?: string[] }; settings?: { label?: string; heading?: string; description?: string; ctaLabel?: string; ctaHref?: string } };
-export type PublicHomepageData = { config: { sections: PublicSection[] }; articles: PublicArticle[]; videos: PublicVideo[]; research: PublicResearch[]; collections: PublicCollectionSummary[] };
+export type PublicHomepageData = { config: { sections: PublicSection[] }; articles: PublicArticle[]; videos: PublicVideo[]; research: PublicResearch[]; collections: PublicCollectionSummary[]; articleCategories: PublicCategory[] };

@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { connectToDatabase } from "../db/mongodb";
 import { Article, Collection, HomepageConfig, Research, Video } from "../db/models";
 import { requirePermission } from "../permissions";
@@ -35,7 +35,7 @@ export async function publishHomepage(formData: FormData) {
   const draft = homepageSnapshotSchema.parse(current.draft); await validateReferences(draft.sections); const nextRevision = (current.publishedRevision ?? 0) + 1; const snapshot = { ...draft, revision: nextRevision, updatedAt: new Date() };
   const now = new Date(); const history = [{ revision: current.published.revision, snapshot: current.published, createdAt: now, publishedAt: current.publishedRevision === 0 ? now : undefined }, { revision: nextRevision, snapshot, createdBy: user.id, createdAt: now, publishedAt: now }];
   const published = await HomepageConfig.findOneAndUpdate({ key: "homepage", draftRevision: expectedRevision }, { $set: { published: snapshot, publishedBy: user.id, publishedAt: now, updatedBy: user.id }, $push: { revisions: { $each: history } }, $inc: { publishedRevision: 1 } }, { new: true }).lean();
-  if (!published) throw new Error("Draft changed before publishing. Reload and try again."); revalidatePath("/"); revalidatePath("/articles"); revalidatePath("/videos"); revalidatePath("/research"); revalidatePath("/admin/homepage"); revalidatePath("/admin/homepage/preview");
+  if (!published) throw new Error("Draft changed before publishing. Reload and try again."); revalidateTag("public-homepage", "max"); revalidatePath("/"); revalidatePath("/articles"); revalidatePath("/videos"); revalidatePath("/research"); revalidatePath("/admin/homepage"); revalidatePath("/admin/homepage/preview");
 }
 
 export async function restoreHomepageRevision(formData: FormData) {

@@ -19,7 +19,7 @@ export type Category = { id: string; name: string; slug: string; description?: s
 export type ContentStatus = "draft" | "published" | "archived";
 
 export type Article = {
-  id: string; title: string; slug: string; excerpt: string; content: string;
+  id: string; title: string; slug: string; excerpt: string; content: unknown;
   featuredImage: MediaAsset; author: Author; category: Category; tags: string[];
   status: ContentStatus; featured: boolean; publishedAt: string; createdAt: string; updatedAt: string;
   readTime: string;
@@ -61,6 +61,31 @@ const economy = category("economy", "Economy");
 const climate = category("climate", "Climate");
 const technology = category("technology", "Technology");
 const ideas = category("ideas", "Ideas");
+const articleRichTextSample = { type: "doc", content: [
+  { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "A broader idea of prosperity" }] },
+  { type: "paragraph", content: [{ type: "text", text: "Shared prosperity begins with the systems and choices that shape everyday life. " }, { type: "text", text: "Bold perspective", marks: [{ type: "bold" }] }, { type: "text", text: " and " }, { type: "text", text: "italic context", marks: [{ type: "italic" }] }, { type: "text", text: " plus " }, { type: "text", text: "an underlined signal", marks: [{ type: "underline" }] }] },
+  { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Listen to local experience" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Design for participation" }] }] }] },
+  { type: "orderedList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Start with trust" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Measure what matters" }] }] }] },
+  { type: "blockquote", content: [{ type: "paragraph", content: [{ type: "text", text: "The measure of progress is whether more people can shape the future." }] }] },
+] };
+const videoRichTextSample = JSON.stringify({ type: "doc", content: [
+  { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "The choices behind a changing world" }] },
+  { type: "paragraph", content: [{ type: "text", text: "This conversation connects " }, { type: "text", text: "bold ideas", marks: [{ type: "bold" }] }, { type: "text", text: ", " }, { type: "text", text: "italic questions", marks: [{ type: "italic" }] }, { type: "text", text: " and " }, { type: "text", text: "underlined evidence", marks: [{ type: "underline" }] }, { type: "text", text: "." }] },
+  { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "People and institutions" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Technology and dignity" }] }] }] },
+  { type: "orderedList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Watch the opening exchange" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Stay for the practical lessons" }] }] }] },
+  { type: "blockquote", content: [{ type: "paragraph", content: [{ type: "text", text: "Good questions make room for better futures." }] }] },
+] });
+const articleRichTextSampleTwo = { type: "doc", content: [
+  { type: "heading", attrs: { level: 3 }, content: [{ type: "text", text: "Adaptation is an everyday practice" }] },
+  { type: "paragraph", content: [{ type: "text", text: "Climate resilience is built through " }, { type: "text", text: "patient local work", marks: [{ type: "bold" }] }, { type: "text", text: " and careful listening. " }, { type: "hardBreak" }, { type: "text", text: "The most useful plans leave room to learn." }] },
+  { type: "blockquote", content: [{ type: "paragraph", content: [{ type: "text", text: "Preparation is strongest when it is shared." }] }] },
+  { type: "orderedList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Map the risks people already understand" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Fund the practical next step" }] }] }] },
+] };
+const articleRichTextSampleThree = { type: "doc", content: [
+  { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "A long view for technology" }] },
+  { type: "paragraph", content: [{ type: "text", text: "Strategic autonomy depends on people, institutions and " }, { type: "text", text: "open collaboration", marks: [{ type: "underline" }, { type: "italic" }] }, { type: "text", text: "." }] },
+  { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Invest in skills" }] }] }, { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Build trusted infrastructure" }] }] }] },
+] };
 
 export const mediaAssets: MediaAsset[] = [
   image("photo-1532664189809-02133fee698d", "People gathering at an Indian market at golden hour"),
@@ -92,6 +117,17 @@ export const videos: Video[] = [
   { id: "cities", title: "Can Our Cities Adapt to a Warmer Future?", slug: "cities-warmer-future", description: "What resilient urban planning looks like on the ground across South Asia.", thumbnail: asset("photo-1449824913935-59a10b8d2000"), provider: "youtube", videoUrl: "", duration: "18:42", category: climate, status: "published", featured: false, publishedAt: "2026-09-08", createdAt: now, updatedAt: now },
   { id: "work", title: "The Future of Work Is Already Here", slug: "future-of-work", description: "Three perspectives on technology, dignity and the next generation of work.", thumbnail: asset("photo-1521737711867-e3b97375f902"), provider: "youtube", videoUrl: "", duration: "27:05", category: ideas, status: "published", featured: false, publishedAt: "2026-09-04", createdAt: now, updatedAt: now },
 ];
+
+const articleSample = articles.find((item) => item.slug === "new-language-shared-prosperity");
+if (articleSample) articleSample.content = articleRichTextSample;
+const articleSampleTwo = articles.find((item) => item.slug === "climate-adaptation-south-asia");
+if (articleSampleTwo) articleSampleTwo.content = articleRichTextSampleTwo;
+const articleSampleThree = articles.find((item) => item.slug === "semiconductors-strategic-autonomy");
+if (articleSampleThree) articleSampleThree.content = articleRichTextSampleThree;
+const videoSample = videos.find((item) => item.slug === "india-multipolar-world");
+if (videoSample) videoSample.description = videoRichTextSample;
+const videoSampleTwo = videos.find((item) => item.slug === "cities-warmer-future");
+if (videoSampleTwo) videoSampleTwo.description = videoRichTextSample;
 
 export const research: Research[] = [
   { id: "order", title: "India and the New Global Order", slug: "india-new-global-order", description: "How can India navigate a more uncertain, multipolar world?", coverImage: asset("photo-1500530855697-b586d89ba3ee"), authors: [people], category: ideas, type: "Featured Report", status: "published", featured: true, publishedAt: "2026-09-01", createdAt: now, updatedAt: now },

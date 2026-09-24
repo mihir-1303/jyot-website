@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { MediaPicker } from "./MediaPicker";
 
 const emptyDoc = { type: "doc", content: [{ type: "paragraph" }] };
-function normalizeContent(value: unknown) { if (value && typeof value === "object") return value; if (typeof value === "string" && value.trim()) { try { return JSON.parse(value); } catch { return emptyDoc; } } return emptyDoc; }
+function normalizeContent(value: unknown) { if (value && typeof value === "object") return value; if (typeof value === "string" && value.trim()) { try { return JSON.parse(value); } catch { return { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: value }] }] }; } } return emptyDoc; }
 type ToolbarButton = { label: string; active?: () => boolean; enabled: () => boolean; run: () => void };
 
 export function RichTextEditor({ name, initialValue, onDirty }: { name: string; initialValue?: unknown; onDirty?: () => void }) {
@@ -21,6 +21,7 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
     { label: "Italic", active: () => editor.isActive("italic"), enabled: () => editor.can().chain().toggleItalic().run(), run: () => { editor.chain().focus().toggleItalic().run(); } },
     { label: "Underline", active: () => editor.isActive("underline"), enabled: () => editor.can().chain().toggleUnderline().run(), run: () => { editor.chain().focus().toggleUnderline().run(); } },
     { label: "Paragraph", active: () => editor.isActive("paragraph"), enabled: () => editor.can().chain().setParagraph().run(), run: () => { editor.chain().focus().setParagraph().run(); } },
+    { label: "H1", active: () => editor.isActive("heading", { level: 1 }), enabled: () => editor.can().chain().toggleHeading({ level: 1 }).run(), run: () => { editor.chain().focus().toggleHeading({ level: 1 }).run(); } },
     { label: "H2", active: () => editor.isActive("heading", { level: 2 }), enabled: () => editor.can().chain().toggleHeading({ level: 2 }).run(), run: () => { editor.chain().focus().toggleHeading({ level: 2 }).run(); } },
     { label: "H3", active: () => editor.isActive("heading", { level: 3 }), enabled: () => editor.can().chain().toggleHeading({ level: 3 }).run(), run: () => { editor.chain().focus().toggleHeading({ level: 3 }).run(); } },
     { label: "• List", active: () => editor.isActive("bulletList"), enabled: () => editor.can().chain().toggleBulletList().run(), run: () => { editor.chain().focus().toggleBulletList().run(); } },

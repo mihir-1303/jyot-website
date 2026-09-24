@@ -44,6 +44,7 @@ export function Hero({ stories, settings }: { stories: Article[]; settings?: Her
     if (interactionTimer.current) clearTimeout(interactionTimer.current);
     interactionTimer.current = setTimeout(() => setInteracting(false), 700);
   };
+  const moveRelative = (direction: 1 | -1) => chooseSlide((activeIndexRef.current + direction + stories.length) % stories.length);
   const renderedSlides = hasMultipleStories ? [{ story: stories[stories.length - 1], logicalIndex: stories.length - 1 }, ...stories.map((story, logicalIndex) => ({ story, logicalIndex })), { story: stories[0], logicalIndex: 0 }] : stories.map((story, logicalIndex) => ({ story, logicalIndex }));
   const handleTrackTransitionEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
     if (!hasMultipleStories || event.propertyName !== "transform") return;
@@ -77,7 +78,7 @@ export function Hero({ stories, settings }: { stories: Article[]; settings?: Her
             </div>;
           })}
         </div>
-        {stories.length > 1 && <div className="hero-pagination" aria-label="Featured story slides">{stories.map((item, index) => <button key={item.id} type="button" className={`hero-dot ${index === activeIndex ? "hero-dot-active" : ""}`} aria-label={`Show ${item.title}`} aria-current={index === activeIndex ? "true" : undefined} onClick={() => chooseSlide(index)} />)}</div>}
+        {stories.length > 1 && <div className="hero-controls"><button type="button" className="hero-control" aria-label="Previous featured story" onClick={() => moveRelative(-1)}>←</button><div className="hero-pagination" aria-label="Featured story slides">{stories.map((item, index) => <button key={item.id} type="button" className={`hero-dot ${index === activeIndex ? "hero-dot-active" : ""}`} aria-label={`Show ${item.title}`} aria-current={index === activeIndex ? "true" : undefined} onClick={() => chooseSlide(index)} />)}</div><button type="button" className="hero-control" aria-label="Next featured story" onClick={() => moveRelative(1)}>→</button></div>}
       </div>
     </div>
   </section>;

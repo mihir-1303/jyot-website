@@ -1,12 +1,15 @@
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element */
 import { DeleteButton } from "../../../components/cms/DeleteButton";
 import { deleteContent } from "../../../lib/cms/actions";
-import { getAdminVideos } from "../../../lib/data/admin";
+import { getAdminVideos as getRawAdminVideos } from "../../../lib/data/admin";
+import { mediaDeliveryUrl, mediaSourceFallback } from "../../../lib/media-url";
 
 const filters = [{ value: "", label: "All" }, { value: "draft", label: "Draft" }, { value: "published", label: "Published" }, { value: "scheduled", label: "Scheduled" }];
 const formatDate = (value?: Date) => value ? new Date(value).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—";
 const statusLabel = (value: string) => value[0].toUpperCase() + value.slice(1);
-const imageUrl = (item: { sourceUrl?: string; objectKey?: string; variants?: { presentation16x9?: { objectKey?: string } } }) => item.sourceUrl ?? (process.env.MEDIA_DELIVERY_BASE_URL ? `${process.env.MEDIA_DELIVERY_BASE_URL.replace(/\/$/, "")}/${item.variants?.presentation16x9?.objectKey ?? item.objectKey ?? ""}` : "");
+const imageUrl = (item: { sourceUrl?: string; objectKey?: string; variants?: { presentation16x9?: { objectKey?: string } } }) => mediaDeliveryUrl(item.variants?.presentation16x9?.objectKey ?? item.objectKey) ?? mediaSourceFallback(item.sourceUrl) ?? "";
+const serialize = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const getAdminVideos = async (status?: string) => serialize(await getRawAdminVideos(status));
 
 export default async function AdminVideosPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const status = (await searchParams).status ?? "";

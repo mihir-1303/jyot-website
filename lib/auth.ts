@@ -12,13 +12,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: { jwt({ token, user }) { if (user) { token.sub = user.id; token.role = (user as { role?: string }).role; } return token; }, session({ session, token }) { if (session.user) { session.user.id = token.sub ?? ""; session.user.role = token.role as string; } return session; } },
 });
 
-export const isLocalCmsBypassEnabled = process.env.NODE_ENV === "development" && process.env.CMS_LOCAL_DEV_BYPASS !== "false";
+// Temporary CMS access: disabled by default and enabled only by explicit environment flags.
+export function isLocalCmsBypassEnabled() { return process.env.NODE_ENV === "development" && process.env.CMS_LOCAL_DEV_BYPASS === "true"; }
+export function isTemporaryCmsBypassEnabled() { return process.env.CMS_TEMP_BYPASS === "true"; }
+export function isCmsBypassEnabled() { return isLocalCmsBypassEnabled() || isTemporaryCmsBypassEnabled(); }
 export const localCmsUser = { id: "000000000000000000000001", name: "Local CMS Developer", email: "local-cms@localhost", role: "ADMIN" as const };
-export async function getCurrentUser() { if (isLocalCmsBypassEnabled) return localCmsUser; const session = await auth(); return session?.user ?? null; }
+export async function getCurrentUser() { if (isCmsBypassEnabled()) return localCmsUser; const session = await auth(); return session?.user ?? null; }
 export async function requireAuth() {
   const user = await getCurrentUser();
   if (!user?.id) throw new Error("Unauthorized");
-  if (isLocalCmsBypassEnabled) return user;
+  if (isCmsBypassEnabled()) return user;
   await connectToDatabase();
   const activeUser = await User.exists({ _id: user.id, disabledAt: { $exists: false } });
   if (!activeUser) throw new Error("Unauthorized");

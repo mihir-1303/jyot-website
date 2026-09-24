@@ -42,7 +42,7 @@ async function main() {
   const anotherAdmin = await User.findOne({ role: "ADMIN", ...(existing ? { _id: { $ne: existing._id } } : {}) }).select("_id").lean();
   if (anotherAdmin) throw new Error("An ADMIN user already exists with a different email. Sign in as that administrator to manage users.");
   const passwordHash = await bcrypt.hash(password, 12);
-  if (existing) await User.updateOne({ _id: existing._id }, { $set: { email, passwordHash, role: "ADMIN", disabledAt: null } });
+  if (existing) await User.updateOne({ _id: existing._id }, { $set: { email, passwordHash, role: "ADMIN" }, $unset: { disabledAt: 1 } });
   else await User.create({ name: email.split("@")[0], email, passwordHash, role: "ADMIN", permissionOverrides: [] });
   console.log(existing ? "ADMIN credentials updated." : "ADMIN user created.");
 }

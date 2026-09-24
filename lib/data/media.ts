@@ -1,8 +1,8 @@
 import "server-only";
 import { connectToDatabase } from "../db/mongodb";
 import { Article, HomepageConfig, MediaAsset, Research, Video } from "../db/models";
-import { mediaDeliveryUrl, mediaSourceFallback } from "../media-url";
-const publicUrl = (item: { sourceUrl?: string; objectKey?: string }) => mediaDeliveryUrl(item.objectKey) ?? mediaSourceFallback(item.sourceUrl);
+import { mediaUrlForAsset } from "../media-url";
+const publicUrl = (item: { sourceUrl?: string; objectKey?: string }) => mediaUrlForAsset(item.objectKey, item.sourceUrl);
 import { requirePermission } from "../permissions";
 export type MediaAdminItem = { _id: string; originalName: string; mimeType: string; width?: number; height?: number; size: number; altText?: string; caption?: string; objectKey?: string; sourceUrl?: string; url?: string; createdAt?: Date | string; usageCount?: number };
 export async function getMediaAssets(search?: string, type?: "images" | "other", includeUsage = false) {

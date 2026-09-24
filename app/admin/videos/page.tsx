@@ -2,12 +2,12 @@
 import { DeleteButton } from "../../../components/cms/DeleteButton";
 import { deleteContent } from "../../../lib/cms/actions";
 import { getAdminVideos as getRawAdminVideos } from "../../../lib/data/admin";
-import { mediaDeliveryUrl, mediaSourceFallback } from "../../../lib/media-url";
+import { mediaUrlForAsset } from "../../../lib/media-url";
 
 const filters = [{ value: "", label: "All" }, { value: "draft", label: "Draft" }, { value: "published", label: "Published" }, { value: "scheduled", label: "Scheduled" }];
 const formatDate = (value?: Date) => value ? new Date(value).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—";
 const statusLabel = (value: string) => value[0].toUpperCase() + value.slice(1);
-const imageUrl = (item: { sourceUrl?: string; objectKey?: string; variants?: { presentation16x9?: { objectKey?: string } } }) => mediaDeliveryUrl(item.variants?.presentation16x9?.objectKey ?? item.objectKey) ?? mediaSourceFallback(item.sourceUrl) ?? "";
+const imageUrl = (item: { sourceUrl?: string; objectKey?: string; variants?: { presentation16x9?: { objectKey?: string } } }) => mediaUrlForAsset(item.variants?.presentation16x9?.objectKey ?? item.objectKey, item.sourceUrl) ?? "";
 const serialize = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const getAdminVideos = async (status?: string) => serialize(await getRawAdminVideos(status));
 

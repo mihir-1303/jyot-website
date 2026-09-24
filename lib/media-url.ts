@@ -19,3 +19,10 @@ export function mediaDeliveryUrl(objectKey?: string) {
 export function mediaSourceFallback(sourceUrl?: string) {
   return absoluteHttpUrl(sourceUrl);
 }
+
+export function mediaUrlForAsset(objectKey?: string, sourceUrl?: string) {
+  const source = mediaSourceFallback(sourceUrl);
+  const normalizedKey = objectKey?.trim().replace(/^\/+/, "");
+  if (normalizedKey?.startsWith("seed/") && source) return source;
+  return mediaDeliveryUrl(objectKey) ?? source;
+}

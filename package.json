@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx scripts/test-foundation.ts",
+    "migrate:seed-media": "tsx scripts/migrate-seeded-media.ts",
     "db:seed": "tsx scripts/seed.ts",
     "admin:create": "tsx scripts/create-admin.ts"
   },

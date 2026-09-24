@@ -2,7 +2,7 @@ import "server-only";
 import { connectToDatabase } from "./db/mongodb";
 import { Article, Author, Category, Research, Tag, Video } from "./db/models";
 import { normalizeQuery } from "./search-utils";
-import { mediaDeliveryUrl, mediaSourceFallback } from "./media-url";
+import { mediaUrlForAsset } from "./media-url";
 
 export type SearchType = "all" | "articles" | "research" | "videos" | "authors" | "topics";
 export type SearchSort = "relevance" | "newest" | "oldest";
@@ -13,7 +13,7 @@ export type SearchResult = { type: ContentType | "author" | "category" | "tag"; 
 const publicFilter = { status: "published", $or: [{ publishedAt: { $exists: false } }, { publishedAt: { $lte: new Date() } }] };
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const text = (value: unknown) => String(value ?? "");
-const media = (value: unknown) => { const item = value as AnyRow | undefined; if (!item) return undefined; const variant = item.variants?.presentation16x9; const key = variant?.objectKey ?? item.objectKey; const url = mediaDeliveryUrl(key) ?? mediaSourceFallback(item.sourceUrl); return url ? { url, altText: item.altText } : undefined; };
+const media = (value: unknown) => { const item = value as AnyRow | undefined; if (!item) return undefined; const variant = item.variants?.presentation16x9; const key = variant?.objectKey ?? item.objectKey; const url = mediaUrlForAsset(key, item.sourceUrl); return url ? { url, altText: item.altText } : undefined; };
 const scoreResult = (title: string, description: string, slug: string, term: string) => { const q = term.toLowerCase(); const t = title.toLowerCase(); const s = slug.toLowerCase(); if (t === q) return 100; if (t.startsWith(q)) return 90; if (t.includes(q)) return 75; if (s.includes(q)) return 65; if (description.toLowerCase().includes(q)) return 35; return 15; };
 
 export async function searchPublished(query: string, options: { type?: SearchType; sort?: SearchSort; page?: number; limit?: number } = {}) {

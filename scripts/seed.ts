@@ -3,6 +3,7 @@ import { loadEnvConfig } from "@next/env";
 import { connectToDatabase } from "../lib/db/mongodb-core";
 import { Article, Author, Category, Collection, HomepageConfig, MediaAsset, Research, Tag, User, Video } from "../lib/db/models-core";
 import { articles, homepageData, mediaAssets, research, videos } from "../lib/mockData";
+import { ensureSeedMediaObjects } from "../lib/seed-media";
 import mongoose from "mongoose";
 
 loadEnvConfig(process.cwd());
@@ -10,6 +11,7 @@ loadEnvConfig(process.cwd());
 const oid = () => new mongoose.Types.ObjectId();
 
 async function seed() {
+  await ensureSeedMediaObjects(mediaAssets);
   await connectToDatabase();
   const user = await User.findOneAndUpdate({ email: "seed@jyot.local" }, { name: "Jyot Seed User", email: "seed@jyot.local", role: "ADMIN" }, { upsert: true, new: true });
   const mediaIds = new Map(mediaAssets.map((item) => [item.id, oid()]));

@@ -1,0 +1,31 @@
+.section { background: #202a34; color: #faf7f2; padding: clamp(3rem, 5vw, 5rem) 0; }
+.heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgb(250 247 242 / 25%); padding-bottom: 1rem; }
+.heading :global(.eyebrow), .section :global(.meta) { color: #f4512a; }
+.grid { display: grid; grid-template-columns: 280px minmax(0, 1fr); align-items: start; gap: 48px; padding-top: 1.75rem; }
+.topics { min-width: 0; }
+.topics > :global(.meta) { margin-bottom: .75rem; }
+.topicsList { display: flex; max-height: 25rem; flex-direction: column; gap: .15rem; overflow-y: auto; padding-right: .5rem; scrollbar-color: #657078 transparent; }
+.topic { width: 100%; min-height: 2.5rem; border: 0; border-left: 2px solid transparent; background: transparent; color: #d3d8da; cursor: pointer; font: inherit; padding: .5rem .75rem; text-align: left; transition: color .2s ease, border-color .2s ease, background .2s ease; }
+.topic:hover, .topic:focus-visible, .topicActive { border-left-color: var(--orange); background: rgb(244 81 42 / 14%); color: #fff; }
+.results { min-width: 0; }
+.card { min-width: 0; border-top: 1px solid rgb(250 247 242 / 25%); padding-top: .75rem; }
+.cardCopy { display: grid; grid-template-rows: auto minmax(4.5rem, 4.5rem) auto; padding-top: .8rem; }
+.cardTitle { color: #fff; font-size: clamp(1.3rem, 1.8vw, 1.75rem); letter-spacing: -.025em; line-height: 1.12; }
+.cardAuthor { align-self: end; color: #c3c9cc; font-size: .67rem; font-style: italic; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.researchGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.empty { border-top: 1px solid rgb(250 247 242 / 25%); padding-top: .9rem; color: #c3c9cc; font-size: .9rem; }
+
+@media (max-width: 1023px) {
+  .grid { grid-template-columns: 240px minmax(0, 1fr); gap: 32px; }
+  .researchGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+  .heading { display: block; }
+  .heading h2 { margin-top: .4rem; }
+  .grid { grid-template-columns: 1fr; }
+  .topicsList { max-height: none; flex-direction: row; overflow-x: auto; overflow-y: hidden; padding-bottom: .5rem; }
+  .topic { width: auto; flex: 0 0 auto; border-left: 0; border-bottom: 2px solid transparent; }
+  .topic:hover, .topic:focus-visible, .topicActive { border-bottom-color: var(--orange); }
+  .researchGrid { grid-template-columns: 1fr; }
+}

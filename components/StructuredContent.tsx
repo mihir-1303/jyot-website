@@ -3,6 +3,11 @@ import type { PublicMediaAsset } from "../lib/types/public";
 import { parseRichText } from "../lib/rich-text";
 type Node = { type?: string; text?: string; attrs?: Record<string, unknown>; content?: Node[]; marks?: { type?: string; attrs?: Record<string, unknown> }[] };
 const safeHref = (href: unknown) => typeof href === "string" && /^(https?:\/\/|mailto:|tel:)/i.test(href) && !/javascript\s*:/i.test(href) ? href : undefined;
+const imageSizes = { small: "small", medium: "medium", large: "large", full: "full" } as const;
+const imageAlignments = { left: "left", center: "center", right: "right" } as const;
+const imageSize = (value: unknown): keyof typeof imageSizes => typeof value === "string" && value in imageSizes ? value as keyof typeof imageSizes : "large";
+const imageAlign = (value: unknown): keyof typeof imageAlignments => typeof value === "string" && value in imageAlignments ? value as keyof typeof imageAlignments : "center";
+const imageWidth = (attrs: Record<string, unknown> | undefined) => { const value = attrs?.width; if (typeof value === "number" && Number.isFinite(value)) return Math.min(100, Math.max(20, Math.round(value))); const size = imageSize(attrs?.size); return ({ small: 25, medium: 50, large: 75, full: 100 } as Record<string, number>)[size]; };
 export function StructuredContent({ content, media = {} }: { content: unknown; media?: Record<string, PublicMediaAsset> }) {
   const parsedContent = parseRichText(content);
   if (typeof parsedContent === "string") return <div className="prose max-w-none whitespace-pre-wrap leading-8">{parsedContent}</div>;
@@ -18,7 +23,7 @@ export function StructuredContent({ content, media = {} }: { content: unknown; m
     if (node.type === "blockquote") return <blockquote key={key}>{children}</blockquote>;
     if (node.type === "horizontalRule") return <hr key={key} />;
     if (node.type === "hardBreak") return <br key={key} />;
-    if (node.type === "image") { const asset = typeof node.attrs?.mediaId === "string" ? media[node.attrs.mediaId] : undefined; const candidate = typeof node.attrs?.src === "string" && /^https:\/\//i.test(node.attrs.src) ? node.attrs.src : undefined; const src = asset?.url ?? candidate; return src ? <figure key={key}><Image src={src} alt={String(node.attrs?.alt ?? asset?.altText ?? "")} width={asset?.width ?? 1200} height={asset?.height ?? 675} className="h-auto w-full" /><figcaption>{asset?.caption}</figcaption></figure> : null; }
+    if (node.type === "image") { const asset = typeof node.attrs?.mediaId === "string" ? media[node.attrs.mediaId] : undefined; const candidate = typeof node.attrs?.src === "string" && /^https:\/\//i.test(node.attrs.src) ? node.attrs.src : undefined; const src = asset?.url ?? candidate; const size = imageSize(node.attrs?.size); const align = imageAlign(node.attrs?.align); const width = imageWidth(node.attrs); return src ? <figure key={key} style={{ width: `${width}%` }} className={`rich-image rich-image-${imageSizes[size]} rich-image-align-${imageAlignments[align]}`}><Image src={src} alt={String(node.attrs?.alt ?? asset?.altText ?? "")} width={asset?.width ?? 1200} height={asset?.height ?? 675} className="h-auto w-full" /><figcaption>{asset?.caption}</figcaption></figure> : null; }
     return null;
   };
   return <div className="prose max-w-none leading-8">{render(parsedContent as Node, "content")}</div>;

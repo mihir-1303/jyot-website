@@ -1,7 +1,7 @@
-import type { PublicArticle, PublicVideo } from "./types/public";
+import type { PublicArticle, PublicResearch, PublicVideo } from "./types/public";
 
 export type EditorialContent = {
-  type: "article" | "video";
+  type: "article" | "video" | "research";
   title: string;
   slug: string;
   excerpt: string;
@@ -39,5 +39,18 @@ export function videoToEditorialContent(video: PublicVideo): EditorialContent {
     publishedAt: video.publishedAt,
     canonicalPath: `/videos/${video.slug}`,
     primaryMedia: { type: "video", asset: video.thumbnail, videoUrl: video.videoUrl },
+  };
+}
+
+export function researchToEditorialContent(research: PublicResearch): EditorialContent {
+  return {
+    type: "research",
+    title: research.title,
+    slug: research.slug,
+    excerpt: research.description,
+    category: research.category,
+    publishedAt: research.publishedAt,
+    canonicalPath: `/research/${research.slug}`,
+    primaryMedia: { type: "image", asset: research.coverImage },
   };
 }

@@ -1,14 +1,13 @@
 import { notFound } from "next/navigation";
 import { ArticleCard } from "../../../components/ArticleCard";
 import { EditorialImage } from "../../../components/EditorialImage";
-import { JsonLd } from "../../../components/JsonLd";
 import { StructuredContent } from "../../../components/StructuredContent";
 import { getCollectionNavigation, getPublishedArticleBySlug, getRelatedPublishedArticles } from "../../../lib/data/public";
 import { canonical, editorialMetadata } from "../../../lib/seo";
 import { CollectionNavigation } from "../../../components/CollectionNavigation";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
 import { EditorialHeader } from "../../../components/EditorialHeader";
 import { articleToEditorialContent } from "../../../lib/editorial";
+import { ContentDetailLayout } from "../../../components/ContentDetailLayout";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -28,9 +27,7 @@ export default async function ArticlePage({ params }: Props) {
   ]);
   const editorial = articleToEditorialContent(item);
 
-  return <main className="article-page page-shell section">
-    <Breadcrumbs items={[{ label: "Articles", href: "/articles" }, { label: item.title }]} />
-    <JsonLd data={data} />
+  return <ContentDetailLayout breadcrumbs={[{ label: "Articles", href: "/articles" }, { label: item.title }]} jsonLd={data}>
     <div className="article-layout">
       <article className="article-main">
         <EditorialHeader content={editorial} showByline={false} />
@@ -46,5 +43,5 @@ export default async function ArticlePage({ params }: Props) {
       </aside>
     </div>
     {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}{related.length > 0 && <section className="article-related" aria-labelledby="related-articles"><div className="article-related-heading"><p className="eyebrow">Continue reading</p><h2 id="related-articles" className="serif">Related Articles</h2></div><div className="article-related-grid">{related.map((article) => <ArticleCard article={article} compact key={article.id} />)}</div></section>}
-  </main>;
+  </ContentDetailLayout>;
 }

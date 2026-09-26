@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { Breadcrumbs } from "../../../components/Breadcrumbs";
 import { CollectionNavigation } from "../../../components/CollectionNavigation";
+import { ContentDetailLayout } from "../../../components/ContentDetailLayout";
+import { EditorialHeader } from "../../../components/EditorialHeader";
 import { EditorialImage } from "../../../components/EditorialImage";
-import { JsonLd } from "../../../components/JsonLd";
 import { StructuredContent } from "../../../components/StructuredContent";
 import { getCollectionNavigation, getPublishedResearchBySlug } from "../../../lib/data/public";
+import { researchToEditorialContent } from "../../../lib/editorial";
 import { canonical, editorialMetadata } from "../../../lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -16,5 +17,21 @@ export default async function ResearchDetailPage({ params }: Props) {
   if (!item) notFound();
   const data = { "@context": "https://schema.org", "@type": "ScholarlyArticle", headline: item.title, description: item.description, image: item.coverImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: item.authors.map((author) => ({ "@type": "Person", name: author.name })), articleSection: item.category.name, mainEntityOfPage: canonical(`/research/${item.slug}`) };
   const collectionNavigation = await getCollectionNavigation("research", item.id);
-  return <main className="page-shell section max-w-5xl"><Breadcrumbs items={[{ label: "Research", href: "/research" }, { label: item.title }]} /><JsonLd data={data} /><p className="eyebrow">{item.type}</p><h1 className="serif mt-4 text-5xl md:text-7xl">{item.title}</h1><p className="mt-6 text-lg leading-8 text-[var(--muted)]">{item.description}</p><p className="meta mt-6">{item.authors.map((author) => author.name).join(" · ")} · {new Date(item.publishedAt).toLocaleDateString("en-US", { dateStyle: "long" })}</p><div className="mt-12"><EditorialImage src={item.coverImage} alt={item.coverImage.altText} /><div className="mt-12"><StructuredContent content={item.content} /></div></div>{item.pdfMedia && <p className="mt-8"><a className="eyebrow border-b border-[var(--orange)] pb-2" href={item.pdfMedia.url}>Download research PDF →</a></p>}{collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}</main>;
+  return <ContentDetailLayout breadcrumbs={[{ label: "Research", href: "/research" }, { label: item.title }]} jsonLd={data}>
+    <div className="article-layout">
+      <article className="article-main">
+        <EditorialHeader content={researchToEditorialContent(item)} eyebrow={item.type} showByline={false} />
+        <div className="article-hero"><EditorialImage src={item.coverImage} alt={item.coverImage.altText} priority /></div>
+        <div className="article-body"><StructuredContent content={item.content} /></div>
+        {item.pdfMedia && <p><a className="eyebrow border-b border-[var(--orange)] pb-2" href={item.pdfMedia.url}>Download research PDF →</a></p>}
+      </article>
+      <aside className="article-author" aria-label="Research authors">
+        <p className="eyebrow">Authors</p>
+        <div className="article-author-rule" aria-hidden="true" />
+        {item.authors.map((author) => <div key={author.id}><h2 className="serif article-author-name">{author.name}</h2>{author.bio && <p className="article-author-bio">{author.bio}</p>}</div>)}
+        <p className="meta article-read-time">{item.category.name}</p>
+      </aside>
+    </div>
+    {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}
+  </ContentDetailLayout>;
 }

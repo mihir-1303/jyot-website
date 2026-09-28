@@ -24,7 +24,7 @@ function Icon({ name }: { name: IconName }) {
 }
 
 const groups = [
-  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Videos", "/admin/videos", "play"], ["Research", "/admin/research", "book"], ["Collections", "/admin/collections", "layers"]] },
+  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Article archive", "/admin/articles/archive", "file"], ["Videos", "/admin/videos", "play"], ["Research", "/admin/research", "book"], ["Collections", "/admin/collections", "layers"]] },
   { label: "Media", items: [["Media library", "/admin/media", "image"]] },
   { label: "Site", items: [["Homepage", "/admin/homepage", "home"], ["Authors", "/admin/authors", "users"]] },
 ] as const;

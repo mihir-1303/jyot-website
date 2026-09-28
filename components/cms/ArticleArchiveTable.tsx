@@ -1,0 +1,11 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+type Item = { id: string; title: string; author: string; category: string; archivedAt: string; archiveReason?: string; archiveNotes?: string; status: string };
+
+export function ArticleArchiveTable({ items }: { items: Item[] }) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => { const value = query.trim().toLowerCase(); return value ? items.filter((item) => [item.title, item.author, item.category, item.archiveReason ?? "", item.archiveNotes ?? ""].some((field) => field.toLowerCase().includes(value))) : items; }, [items, query]);
+  return <><div className="admin-archive-toolbar"><p className="meta">{filtered.length} archived article{filtered.length === 1 ? "" : "s"}</p><input className="admin-archive-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search archive" aria-label="Search archived articles" /></div>{filtered.length ? <div className="mt-5 overflow-x-auto border bg-white"><table className="w-full min-w-[860px] text-left text-sm"><thead className="border-b"><tr><th className="p-4">Article</th><th className="p-4">Author</th><th className="p-4">Category</th><th className="p-4">Archived</th><th className="p-4">Reason / notes</th><th className="p-4">Status</th><th className="p-4">Actions</th></tr></thead><tbody>{filtered.map((item) => <tr className="border-b last:border-0" key={item.id}><td className="p-4 font-bold">{item.title}</td><td className="p-4">{item.author || "—"}</td><td className="p-4">{item.category || "—"}</td><td className="p-4">{item.archivedAt}</td><td className="p-4"><strong>{item.archiveReason || "—"}</strong>{item.archiveNotes && <span className="block max-w-xs text-xs text-[var(--muted)]">{item.archiveNotes}</span>}</td><td className="p-4"><span className="admin-status">{item.status}</span></td><td className="p-4"><div className="flex gap-3"><a className="text-[var(--orange)]" href={`/admin/articles/${item.id}/preview`}>View</a><a className="text-[var(--orange)]" href={`/admin/articles/${item.id}/edit`}>Restore / edit</a></div></td></tr>)}</tbody></table></div> : <p className="mt-5 admin-empty">No archived articles found.</p>}</>;
+}

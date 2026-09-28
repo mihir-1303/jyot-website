@@ -25,7 +25,7 @@ export type Category = AuditFields & { id: Id; name: string; slug: string; descr
 export type Tag = AuditFields & { id: Id; name: string; slug: string };
 
 export type ContentBase = AuditFields & { id: Id; title: string; slug: string; status: ContentStatus; scheduledAt?: Date; publishedAt?: Date; publishedBySystem?: boolean; featured: boolean; seo?: SEOFields };
-export type Article = ContentBase & { excerpt: string; content: unknown; coverMedia: Id; author: Id; category: Id; tags: Id[]; readTime?: string };
+export type Article = ContentBase & { excerpt: string; content: unknown; coverMedia: Id; author: Id[]; category: Id[]; tags: Id[]; readTime?: string };
 export type Video = ContentBase & { description: string; thumbnail: Id; sourceType: "external" | "r2"; provider?: "youtube" | "vimeo" | "other"; externalUrl?: string; media?: Id; duration?: string; author?: Id; category: Id };
 export type Research = ContentBase & { description: string; content: unknown; coverMedia: Id; pdfMedia?: Id; authors: Id[]; category: Id; type: string };
 export type CollectionItem = { type: "article" | "research" | "video"; contentId: Id; order: number };

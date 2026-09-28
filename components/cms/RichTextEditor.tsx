@@ -4,8 +4,8 @@
 import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import { useEffect, useRef, useState } from "react";
-import { MediaPicker } from "./MediaPicker";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { MediaPicker, type MediaPickerAsset } from "./MediaPicker";
 
 const emptyDoc = { type: "doc", content: [{ type: "paragraph" }] };
 const sizes = [{ value: "small", label: "Small", detail: "25%" }, { value: "medium", label: "Medium", detail: "50%" }, { value: "large", label: "Large", detail: "75%" }, { value: "full", label: "Full", detail: "100%" }] as const;
@@ -83,10 +83,23 @@ function ImageControls({ editor, metadata }: { editor: ReturnType<typeof useEdit
   </aside>;
 }
 
-export function RichTextEditor({ name, initialValue, onDirty }: { name: string; initialValue?: unknown; onDirty?: () => void }) {
+export type RichTextEditorHandle = { requestMedia: () => void };
+type RichTextEditorProps = { name: string; initialValue?: unknown; onDirty?: () => void; onRequestMedia?: (insertInline: (asset: MediaPickerAsset) => void) => void; onImageCountChange?: (count: number) => void };
+
+export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(function RichTextEditor({ name, initialValue, onDirty, onRequestMedia, onImageCountChange }, ref) {
   const initialContent = normalizeContent(initialValue); const [value, setValue] = useState(JSON.stringify(initialContent)); const [, refreshToolbar] = useState(0); const [selectedMedia, setSelectedMedia] = useState<MediaMeta | null>(null);
-  const editor = useEditor({ extensions: [StarterKit.configure({ link: { openOnClick: false, protocols: ["http", "https", "mailto", "tel"] }, underline: {} }), EditorialImage.configure({ inline: false, allowBase64: false })], content: initialContent, immediatelyRender: false, onTransaction: () => refreshToolbar((current) => current + 1), onUpdate: ({ editor: current }) => { setValue(JSON.stringify(current.getJSON())); onDirty?.(); } });
+  const editor = useEditor({ extensions: [StarterKit.configure({ link: { openOnClick: false, protocols: ["http", "https", "mailto", "tel"] }, underline: {} }), EditorialImage.configure({ inline: false, allowBase64: false })], content: initialContent, immediatelyRender: false, onTransaction: () => refreshToolbar((current) => current + 1), onUpdate: ({ editor: current }) => { const json = current.getJSON(); setValue(JSON.stringify(json)); onImageCountChange?.(countImages(json)); onDirty?.(); } });
   useEffect(() => { const handler = (event: BeforeUnloadEvent) => { if (value !== JSON.stringify(initialContent)) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", handler); return () => window.removeEventListener("beforeunload", handler); }, [initialContent, value]);
+  const requestInlineMedia = useCallback(() => {
+    if (!editor) return;
+    const selection = { from: editor.state.selection.from, to: editor.state.selection.to };
+    onRequestMedia?.((asset) => {
+      if (!asset.url) return;
+      editor.chain().setTextSelection(selection).focus().setImage({ src: asset.url, alt: asset.altText, title: asset.originalName, mediaId: asset._id, width: 75, size: "large", align: "center" } as never).run();
+      setSelectedMedia({ name: asset.originalName, width: asset.width, height: asset.height });
+    });
+  }, [editor, onRequestMedia]);
+  useImperativeHandle(ref, () => ({ requestMedia: requestInlineMedia }), [requestInlineMedia]);
   if (!editor) return <div className="border p-4">Loading editor…</div>;
   const buttons: ToolbarButton[] = [
     { label: "Bold", active: () => editor.isActive("bold"), enabled: () => editor.can().chain().toggleBold().run(), run: () => { editor.chain().focus().toggleBold().run(); } },
@@ -103,6 +116,8 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
     { label: "Undo", enabled: () => editor.can().chain().undo().run(), run: () => { editor.chain().focus().undo().run(); } },
     { label: "Redo", enabled: () => editor.can().chain().redo().run(), run: () => { editor.chain().focus().redo().run(); } },
   ];
-  const selectMedia = (asset: { _id: string; url?: string; altText?: string; originalName: string; width?: number; height?: number }) => { if (!asset.url) return; editor.chain().focus().setImage({ src: asset.url, alt: asset.altText, title: asset.originalName, mediaId: asset._id, width: 75, size: "large", align: "center" } as never).run(); setSelectedMedia({ name: asset.originalName, width: asset.width, height: asset.height }); };
-  return <div className="border bg-white"><div className="flex flex-wrap gap-1 border-b p-2" role="toolbar" aria-label="Formatting tools">{buttons.map((button) => <button className={`border px-2 py-1 text-xs ${button.active?.() ? "bg-[var(--orange)] text-white" : ""}`} type="button" key={button.label} aria-label={button.label} aria-pressed={button.active?.() ?? false} disabled={!button.enabled()} onMouseDown={(event) => event.preventDefault()} onClick={button.run}>{button.label}</button>)}</div><div className="p-4"><EditorContent editor={editor} /><ImageControls editor={editor} metadata={selectedMedia} /></div><div className="border-t p-3"><p className="mb-2 text-xs font-bold uppercase">Insert media</p><MediaPicker name="" onAssetSelect={selectMedia} /></div><input type="hidden" name={name} value={value} /></div>;
-}
+  const selectMedia = (asset: MediaPickerAsset) => { if (!asset.url) return; editor.chain().focus().setImage({ src: asset.url, alt: asset.altText, title: asset.originalName, mediaId: asset._id, width: 75, size: "large", align: "center" } as never).run(); setSelectedMedia({ name: asset.originalName, width: asset.width, height: asset.height }); };
+  return <div className="border bg-white"><div className="flex flex-wrap gap-1 border-b p-2" role="toolbar" aria-label="Formatting tools">{buttons.map((button) => <button className={`border px-2 py-1 text-xs ${button.active?.() ? "bg-[var(--orange)] text-white" : ""}`} type="button" key={button.label} aria-label={button.label} aria-pressed={button.active?.() ?? false} disabled={!button.enabled()} onMouseDown={(event) => event.preventDefault()} onClick={button.run}>{button.label}</button>)}</div><div className="p-4"><EditorContent editor={editor} /><ImageControls editor={editor} metadata={selectedMedia} /></div>{!onRequestMedia && <div className="border-t p-3"><p className="mb-2 text-xs font-bold uppercase">Insert media</p><MediaPicker name="" onAssetSelect={selectMedia} /></div>}<input type="hidden" name={name} value={value} /></div>;
+});
+
+function countImages(value: unknown): number { if (!value || typeof value !== "object") return 0; const node = value as { type?: string; content?: unknown[] }; return (node.type === "image" ? 1 : 0) + (node.content?.reduce<number>((total, child) => total + countImages(child), 0) ?? 0); }

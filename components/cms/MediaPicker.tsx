@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { EditorialImage } from "../EditorialImage";
 
-type Asset = { _id: string; originalName: string; mimeType: string; width?: number; height?: number; url?: string; altText?: string };
+export type MediaPickerAsset = { _id: string; originalName: string; mimeType: string; width?: number; height?: number; url?: string; altText?: string };
 
-export function MediaPicker({ name, initialValue = "", onAssetSelect }: { name: string; initialValue?: string; onAssetSelect?: (asset: Asset) => void }) {
-  const [assets, setAssets] = useState<Asset[]>([]);
+export function MediaPicker({ name, initialValue = "", onAssetSelect }: { name: string; initialValue?: string; onAssetSelect?: (asset: MediaPickerAsset) => void }) {
+  const [assets, setAssets] = useState<MediaPickerAsset[]>([]);
   const [selected, setSelected] = useState(initialValue);
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -15,12 +15,12 @@ export function MediaPicker({ name, initialValue = "", onAssetSelect }: { name: 
   useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
-      try { const response = await fetch(`/api/admin/media?search=${encodeURIComponent(search)}`, { signal: controller.signal }); if (!response.ok) throw new Error("load"); setAssets(await response.json() as Asset[]); } catch (error) { if (!(error instanceof DOMException && error.name === "AbortError")) setStatus("Media could not be loaded."); }
+      try { const response = await fetch(`/api/admin/media?search=${encodeURIComponent(search)}`, { signal: controller.signal }); if (!response.ok) throw new Error("load"); setAssets(await response.json() as MediaPickerAsset[]); } catch (error) { if (!(error instanceof DOMException && error.name === "AbortError")) setStatus("Media could not be loaded."); }
     }, 150);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [search]);
 
-  function select(asset: Asset) { setSelected(asset._id); onAssetSelect?.(asset); setStatus(""); }
+  function select(asset: MediaPickerAsset) { setSelected(asset._id); onAssetSelect?.(asset); setStatus(""); }
 
   async function upload(file: File) {
     setUploading(true); setStatus(""); const form = new FormData(); form.append("file", file); form.append("altText", file.name);

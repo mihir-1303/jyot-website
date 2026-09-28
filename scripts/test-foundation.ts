@@ -38,9 +38,9 @@ assert.equal(hasRolePermission("AUTHOR", "homepage.edit"), false);
 assert.equal(hasRolePermission("AUTHOR", "homepage.edit", [{ permission: "homepage.edit", allowed: true }]), true);
 
 const structured = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Safe", marks: [{ type: "bold" }] }] }, { type: "image", attrs: { mediaId: id, src: "https://images.unsplash.com/example.jpg", alt: "Editorial image" } }] };
-assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: structured, author: id, category: id, tags: [id], status: "draft" }).success, true);
-assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "bad", marks: [{ type: "link", attrs: { href: "javascript:alert(1)" } }] }] }] }, author: id, category: id, tags: [], status: "draft" }).success, false);
-assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: "Legacy body", author: id, category: id, tags: [], status: "draft" }).success, true);
+assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: structured, author: [id], category: [id], tags: [id], status: "draft" }).success, true);
+assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "bad", marks: [{ type: "link", attrs: { href: "javascript:alert(1)" } }] }] }] }, author: [id], category: [id], tags: [], status: "draft" }).success, false);
+assert.equal(articleInputSchema.safeParse({ title: "A valid article", slug: "valid-article", excerpt: "Summary", content: "Legacy body", author: [id], category: [id], tags: [], status: "draft" }).success, true);
 const rendered = renderToStaticMarkup(StructuredContent({ content: { type: "doc", content: structured.content.slice(0, 1) } }));
 assert.match(rendered, /Safe/);
 assert.doesNotMatch(rendered, /javascript:/i);

@@ -1,2 +1,3 @@
 import { redirect } from "next/navigation";
-export default async function ArticleAdminRedirect({ params }: { params: Promise<{ id: string }> }) { redirect(`/admin/articles/${(await params).id}/edit`); }
+import { isValidObjectId } from "mongoose";
+export default async function ArticleAdminRedirect({ params }: { params: Promise<{ id: string }> }) { const id = (await params).id; redirect(isValidObjectId(id) ? `/admin/articles/${id}/edit` : "/admin/articles"); }

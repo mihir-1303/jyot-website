@@ -24,7 +24,8 @@ function Icon({ name }: { name: IconName }) {
 }
 
 const groups = [
-  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Article archive", "/admin/articles/archive", "file"], ["Videos", "/admin/videos", "play"], ["Research", "/admin/research", "book"], ["Collections", "/admin/collections", "layers"]] },
+  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Article archive", "/admin/articles/archive", "file"], ["Videos", "/admin/videos", "play"], ["Collections", "/admin/collections", "layers"]] },
+  { label: "Research", children: [["All Research", "/admin/research"], ["Topics", "/admin/research/topics"], ["Explore Research", "/admin/research/explore"]] },
   { label: "Media", items: [["Media library", "/admin/media", "image"]] },
   { label: "Site", items: [["Homepage", "/admin/homepage", "home"], ["Authors", "/admin/authors", "users"]] },
 ] as const;
@@ -41,7 +42,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return <div className="admin-frame">
     <aside id="admin-navigation" className={`admin-sidebar ${open ? "admin-sidebar-open" : ""}`}>
       <div className="admin-brand"><Link href="/admin/dashboard" onClick={() => setOpen(false)}><span className="admin-brand-mark">J</span><span><strong>JYOT</strong><small>Editorial CMS</small></span></Link><button className="admin-mobile-close" type="button" onClick={() => setOpen(false)} aria-label="Close navigation">×</button></div>
-      <nav className="admin-nav" aria-label="CMS navigation">{groups.map((group) => <div className="admin-nav-group" key={group.label}><p>{group.label}</p>{group.items.map(([label, href, icon]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}><Icon name={icon} />{label}</Link>)}</div>)}</nav>
+      <nav className="admin-nav" aria-label="CMS navigation">{groups.map((group) => <div className="admin-nav-group" key={group.label}>{"children" in group ? <details open={pathname.startsWith("/admin/research")}><summary><Icon name="book" />{group.label}</summary><div className="admin-nav-subgroup">{group.children.map(([label, href]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}>{label}</Link>)}</div></details> : <><p>{group.label}</p>{group.items.map(([label, href, icon]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}><Icon name={icon} />{label}</Link>)}</>}</div>)}</nav>
       <div className="admin-sidebar-footer"><Link href="/" target="_blank"><Icon name="external" />View public site</Link><div className="admin-user-chip"><span>AD</span><div><strong>Administrator</strong><small>Content team</small></div></div></div>
     </aside>
     {open && <button className="admin-scrim" type="button" onClick={() => setOpen(false)} aria-label="Close navigation" />}

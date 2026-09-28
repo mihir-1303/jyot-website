@@ -121,7 +121,7 @@ async function getHomepageCollections(plan: { ids: string[]; latestLimit?: numbe
   return values.map((item) => ({ id: idOf(item), title: item.title, slug: item.slug, description: item.description, coverImage: collectionMedia(item.coverImage), curator: item.curator ? author(item.curator) : undefined, itemCount: item.itemCount ?? 0, publishedAt: dateOf(item.publishedAt), updatedAt: dateOf(item.updatedAt), seo: item.seo }));
 }
 async function categoryIdForSlug(slug?: string) { if (!slug) return undefined; const value = await Category.findOne({ slug }).select("_id").lean().exec(); return value?._id; }
-const getPublishedCategoriesCached = unstable_cache(async (type: PublicContentType) => { await connectToDatabase(); const ids = await contentModels[type].distinct("category", publicFilter()); const values = await Category.find({ _id: { $in: ids } }).select("name slug description").sort({ name: 1 }).lean().exec(); return values.map(category); }, ["public-categories"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-categories"] });
+const getPublishedCategoriesCached = unstable_cache(async (type: PublicContentType) => { await connectToDatabase(); const ids = await contentModels[type].distinct("category", publicFilter()); const values = await Category.find({ _id: { $in: ids }, active: { $ne: false } }).select("name slug description").sort({ displayOrder: 1, name: 1 }).lean().exec(); return values.map(category); }, ["public-categories"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-categories"] });
 export function getPublishedCategories(type: PublicContentType) { return getPublishedCategoriesCached(type); }
 
 const getPublishedArticlesCached = unstable_cache(async (limit: number | null, categorySlug: string | null, homepage: boolean) => { await connectToDatabase(); const categoryId = await categoryIdForSlug(categorySlug ?? undefined); if (categorySlug && !categoryId) return []; const q = Article.find({ ...publicFilter(), ...(categoryId ? { category: categoryId } : {}) }).sort({ publishedAt: -1 }).select(homepage ? homepageArticleSelect : articleListSelect); if (limit) q.limit(limit); return (await q.populate(homepage ? homepageArticlePopulate : articleListPopulate).lean().exec()).map(articleDto); }, ["public-articles"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-articles"] });
@@ -186,14 +186,15 @@ async function getHomepageDataUncached(): Promise<PublicHomepageData> {
   const published = (config as unknown as { published?: { sections?: PublicSection[] } } | null)?.published;
   const sections = (published?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order);
   const plan = homepagePlan(sections);
-  const [articles, videos, research, collections, articleCategories] = await Promise.all([
+  const [articles, videos, research, collections, articleCategories, researchCategories] = await Promise.all([
     getHomepageContent(Article, homepageArticleSelect, homepageArticlePopulate, plan.articles, articleDto),
     getHomepageContent(Video, homepageVideoSelect, homepageVideoPopulate, plan.videos, videoDto),
     getHomepageContent(Research, homepageResearchSelect, homepageResearchPopulate, plan.research, researchDto),
     getHomepageCollections(plan.collections),
     getPublishedCategories("articles"),
+    getPublishedCategories("research"),
   ]);
-  return { config: { sections }, articles, videos, research, collections, articleCategories };
+  return { config: { sections }, articles, videos, research, collections, articleCategories, researchCategories };
 }
 export const getHomepageData = unstable_cache(getHomepageDataUncached, ["public-homepage"], { revalidate: PUBLIC_HOMEPAGE_REVALIDATE, tags: ["public-homepage", "public-articles", "public-videos", "public-research", "public-collections", "public-categories"] });
-export async function getHomepagePreviewData(): Promise<PublicHomepageData> { const config = await getHomepageConfigForPreview(); const [articles, videos, research, collections, articleCategories] = await Promise.all([getPublishedArticles(), getPublishedVideos(), getPublishedResearch(), getPublishedCollections(), getPublishedCategories("articles")]); const draft = (config as unknown as { draft?: { sections?: PublicSection[] } } | null)?.draft; const sections = (draft?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order); return { config: { sections }, articles, videos, research, collections, articleCategories }; }
+export async function getHomepagePreviewData(): Promise<PublicHomepageData> { const config = await getHomepageConfigForPreview(); const [articles, videos, research, collections, articleCategories, researchCategories] = await Promise.all([getPublishedArticles(), getPublishedVideos(), getPublishedResearch(), getPublishedCollections(), getPublishedCategories("articles"), getPublishedCategories("research")]); const draft = (config as unknown as { draft?: { sections?: PublicSection[] } } | null)?.draft; const sections = (draft?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order); return { config: { sections }, articles, videos, research, collections, articleCategories, researchCategories }; }

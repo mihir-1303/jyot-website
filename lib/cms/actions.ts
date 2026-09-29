@@ -49,7 +49,7 @@ async function save(kind: "article" | "video" | "research", formData: FormData) 
   let data: Record<string, unknown>;
   if (kind === "article") data = { ...common, coverMedia: raw.coverMedia || undefined, author: ids(raw.author), category: ids(raw.category), tags: ids(raw.tags), readTime: raw.readTime || undefined };
   else if (kind === "video") data = { ...common, description: raw.description, thumbnail: raw.thumbnail || undefined, provider: raw.provider || undefined, externalUrl: raw.externalUrl || undefined, duration: raw.duration || undefined, author: raw.author || undefined, category: raw.category, sourceType: raw.sourceType || "external", media: raw.media || undefined };
-  else data = { ...common, description: raw.description, coverMedia: raw.coverMedia || undefined, pdfMedia: raw.pdfMedia || undefined, authors: ids(raw.authors), category: raw.category, type: raw.type };
+  else data = { ...common, description: raw.description || raw.excerpt || "", coverMedia: raw.coverMedia || undefined, pdfMedia: raw.pdfMedia || undefined, authors: ids(raw.authors), category: raw.category, type: raw.type };
   const parsed = (kind === "article" ? articleInputSchema : kind === "video" ? videoInputSchema : researchInputSchema).safeParse(data);
   if (!parsed.success) throw new Error(`Invalid content fields: ${parsed.error.issues.map((issue) => issue.message).join(" ")}`);
   await verifyReferences(parsed.data as Record<string, unknown>, kind);

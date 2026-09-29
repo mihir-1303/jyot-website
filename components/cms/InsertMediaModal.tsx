@@ -10,7 +10,7 @@ const placements: { value: ArticleMediaPlacement; label: string; description: st
   { value: "inline", label: "Inline image", description: "Inserted directly inside the article body at the current cursor position.", guidance: "Use the original aspect ratio. Recommended width: 1200px or larger; it will display within the article content column." },
 ];
 
-export function InsertMediaModal({ open, onClose, onInsert }: { open: boolean; onClose: () => void; onInsert: (placement: ArticleMediaPlacement, asset: MediaPickerAsset) => void }) {
+export function InsertMediaModal({ open, onClose, onInsert, allowedPlacements }: { open: boolean; onClose: () => void; onInsert: (placement: ArticleMediaPlacement, asset: MediaPickerAsset) => void; allowedPlacements?: ArticleMediaPlacement[] }) {
   const [step, setStep] = useState<"placement" | "library">("placement");
   const [placement, setPlacement] = useState<ArticleMediaPlacement | null>(null);
   const [asset, setAsset] = useState<MediaPickerAsset | null>(null);
@@ -34,13 +34,14 @@ export function InsertMediaModal({ open, onClose, onInsert }: { open: boolean; o
   }, [open, onClose]);
 
   if (!open) return null;
+  const availablePlacements = placements.filter((item) => !allowedPlacements || allowedPlacements.includes(item.value));
   const selectedPlacement = placements.find((item) => item.value === placement);
   return <div className="cms-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="cms-modal" role="dialog" aria-modal="true" aria-labelledby="insert-media-title" ref={dialogRef}>
       <div className="cms-modal-header"><div><p className="eyebrow">Article media</p><h2 id="insert-media-title" className="serif">Insert Media</h2></div><button type="button" className="cms-modal-close" onClick={onClose} aria-label="Close Insert Media">×</button></div>
       {step === "placement" ? <>
         <p className="cms-modal-intro">Choose an image from your Media Library and select where it should appear in this article.</p>
-        <fieldset className="cms-media-placement-list"><legend className="cms-modal-label">Where should this image appear?</legend>{placements.map((item) => <label className={`cms-media-placement ${placement === item.value ? "cms-media-placement-selected" : ""}`} key={item.value}><input type="radio" name="article-media-placement" value={item.value} checked={placement === item.value} onChange={() => setPlacement(item.value)} /><span><strong>{item.label}</strong><small>{item.description}</small><em>{item.guidance}</em></span></label>)}</fieldset>
+        <fieldset className="cms-media-placement-list"><legend className="cms-modal-label">Where should this image appear?</legend>{availablePlacements.map((item) => <label className={`cms-media-placement ${placement === item.value ? "cms-media-placement-selected" : ""}`} key={item.value}><input type="radio" name="article-media-placement" value={item.value} checked={placement === item.value} onChange={() => setPlacement(item.value)} /><span><strong>{item.label}</strong><small>{item.description}</small><em>{item.guidance}</em></span></label>)}</fieldset>
         <div className="cms-modal-actions"><button type="button" className="media-secondary-button" onClick={onClose}>Cancel</button><button type="button" className="media-primary-button" disabled={!placement} onClick={() => setStep("library")}>Continue</button></div>
       </> : <>
         <div className="cms-media-modal-context"><span>Placement: <strong>{selectedPlacement?.label}</strong></span><button type="button" onClick={() => setStep("placement")}>Change placement</button></div>

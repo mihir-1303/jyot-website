@@ -1,11 +1,7 @@
-import { ResearchExploreManager } from "../../../../components/cms/ResearchExploreManager";
-import { saveResearchExploreDraft } from "../../../../lib/cms/research-explore-actions";
-import { getResearchExploreManagerData } from "../../../../lib/data/admin";
+import Link from "next/link";
 import { requirePermission } from "../../../../lib/permissions";
 
 export default async function ResearchExplorePage() {
-  await requirePermission("homepage.view");
-  const data = await getResearchExploreManagerData();
-  const section = data.section as { content?: { ids?: unknown[] } } | undefined;
-  return <main><p className="eyebrow">CMS / Research</p><h1 className="serif mt-2 text-5xl">Explore Research</h1><ResearchExploreManager revision={data.revision} initialIds={(section?.content?.ids ?? []).map(String)} candidates={data.research.map((item) => ({ id: String(item._id), title: String(item.title) }))} saveAction={saveResearchExploreDraft} /></main>;
+  await requirePermission("research.read");
+  return <main><p className="eyebrow">CMS / Research</p><h1 className="serif mt-2 text-5xl">Explore Research</h1><div className="mt-8 max-w-2xl border bg-white p-6"><h2 className="serif text-2xl">Automatic topic navigation</h2><p className="mt-3 text-sm leading-6 text-[var(--muted)]">Explore Research is generated automatically from published Research topics. Select or create a Research Topic in the Research form; published items will appear under that topic without any additional setup.</p><Link className="mt-5 inline-block bg-[var(--orange)] px-4 py-3 text-sm font-bold text-white" href="/admin/research/new">Create research</Link></div></main>;
 }

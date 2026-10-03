@@ -27,7 +27,7 @@ export type Tag = AuditFields & { id: Id; name: string; slug: string };
 export type ContentBase = AuditFields & { id: Id; title: string; slug: string; status: ContentStatus; scheduledAt?: Date; publishedAt?: Date; publishedBySystem?: boolean; featured: boolean; seo?: SEOFields };
 export type Article = ContentBase & { excerpt: string; content: unknown; coverMedia: Id; author: Id[]; category: Id[]; tags: Id[]; readTime?: string };
 export type Video = ContentBase & { description: string; thumbnail: Id; sourceType: "external" | "r2"; provider?: "youtube" | "vimeo" | "other"; externalUrl?: string; media?: Id; duration?: string; author?: Id; category: Id };
-export type Research = ContentBase & { description: string; content: unknown; coverMedia: Id; pdfMedia?: Id; authors: Id[]; category: Id; type: string };
+export type Research = ContentBase & { description: string; content: unknown; coverMedia: Id; pdfMedia?: Id; authors: Id[]; category: Id; tags: Id[]; type: string };
 export type CollectionItem = { type: "article" | "research" | "video"; contentId: Id; order: number };
 export type Collection = ContentBase & { description: string; coverImage?: Id; curator?: Id; items: CollectionItem[] };
 
@@ -39,7 +39,7 @@ export type HomepageSection =
   | { id: "latest-videos"; type: "videos"; title: string; enabled: boolean; order: number; content: SectionContent; settings?: SectionSettings }
   | { id: "featured-research"; type: "research"; title: string; enabled: boolean; order: number; content: Extract<SectionContent, { mode: "manual" }>; settings?: SectionSettings };
 export type SectionSettings = { label?: string; heading?: string; description?: string; ctaLabel?: string; ctaHref?: string };
-export type HomepageSnapshot = { sections: HomepageSection[]; revision: number; updatedAt: Date };
+export type HomepageSnapshot = { sections: HomepageSection[]; featured?: { type: "article" | "research" | "video"; id: Id }[]; revision: number; updatedAt: Date };
 export type HomepageConfig = { id: Id; key: "homepage"; draft: HomepageSnapshot; published: HomepageSnapshot; draftRevision: number; publishedRevision: number; draftUpdatedBy: Id; publishedBy?: Id; publishedAt?: Date; updatedAt: Date };
 
 export const isPubliclyPublished = (status: ContentStatus, publishedAt?: Date, now = new Date()) => status === "published" && (!publishedAt || publishedAt <= now);

@@ -20,7 +20,9 @@ export default async function ArticlePage({ params }: Props) {
   const item = await getPublishedArticleBySlug((await params).slug);
   if (!item) notFound();
 
-  const data = { "@context": "https://schema.org", "@type": "Article", headline: item.title, description: item.excerpt, image: item.featuredImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: item.authors.map((author) => ({ "@type": "Person", name: author.name })), articleSection: item.categories.map((category) => category.name), mainEntityOfPage: canonical(`/articles/${item.slug}`) };
+  const authors = Array.isArray(item.authors) ? item.authors : [];
+  const categories = Array.isArray(item.categories) ? item.categories : [];
+  const data = { "@context": "https://schema.org", "@type": "Article", headline: item.title, description: item.excerpt, image: item.featuredImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: authors.map((author) => ({ "@type": "Person", name: author.name })), articleSection: categories.map((category) => category.name), mainEntityOfPage: canonical(`/articles/${item.slug}`) };
   const [related, collectionNavigation] = await Promise.all([
     getRelatedPublishedArticles(item.id, item.category.id).catch(() => []),
     getCollectionNavigation("article", item.id),
@@ -30,14 +32,14 @@ export default async function ArticlePage({ params }: Props) {
   return <ContentDetailLayout breadcrumbs={[{ label: "Articles", href: "/articles" }, { label: item.title }]} jsonLd={data}>
     <div className="article-layout">
       <article className="article-main">
-        <EditorialHeader content={editorial} eyebrow={item.categories.map((category) => category.name).join(" · ")} showByline={false} />
+        <EditorialHeader content={editorial} eyebrow={categories.map((category) => category.name).join(" · ")} showByline={false} />
         <div className="article-hero"><EditorialImage src={item.featuredImage} alt={item.featuredImage.altText || item.title} priority /></div>
         <div className="article-body"><StructuredContent content={item.content} /></div>
       </article>
       <aside className="article-author" aria-label="Author information">
         <p className="eyebrow">Author</p>
         <div className="article-author-rule" aria-hidden="true" />
-        {item.authors.map((author) => <div key={author.id}><h2 className="serif article-author-name">{author.name}</h2>{author.bio && <p className="article-author-bio">{author.bio}</p>}</div>)}
+        {authors.map((author) => <div key={author.id}><h2 className="serif article-author-name">{author.name}</h2>{author.bio && <p className="article-author-bio">{author.bio}</p>}</div>)}
         {item.readTime && <p className="meta article-read-time">{item.readTime}</p>}
       </aside>
     </div>

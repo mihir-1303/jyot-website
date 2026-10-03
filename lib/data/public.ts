@@ -6,19 +6,20 @@ import { parseRichText, richTextPlainText } from "../rich-text";
 import { mediaSourceFallback, mediaUrlForAsset } from "../media-url";
 import { connectToDatabase } from "../db/mongodb";
 import { Article, Author, Category, Collection, HomepageConfig, MediaAsset, Research, Video } from "../db/models";
-import type { PublicArticle, PublicAuthor, PublicCategory, PublicCollection, PublicCollectionItem, PublicCollectionSummary, PublicHomepageData, PublicMediaAsset, PublicResearch, PublicSection, PublicVideo } from "../types/public";
+import type { PublicArticle, PublicAuthor, PublicCategory, PublicCollection, PublicCollectionItem, PublicCollectionSummary, PublicFeaturedItem, PublicHomepageData, PublicMediaAsset, PublicResearch, PublicSection, PublicVideo } from "../types/public";
+import { featuredReferencesFromSections, featuredReferenceKey, type FeaturedReference } from "../featured";
 
 const publicFilter = () => ({ status: "published", $or: [{ publishedAt: { $exists: false } }, { publishedAt: { $lte: new Date() } }] });
 const articlePopulate = [{ path: "coverMedia" }, { path: "author" }, { path: "category" }, { path: "tags" }];
 const publicMediaSelect = "objectKey sourceUrl altText caption width height variants";
 const videoPopulate = [{ path: "thumbnail" }, { path: "media", select: publicMediaSelect }, { path: "author" }, { path: "category" }];
-const researchPopulate = [{ path: "coverMedia" }, { path: "authors" }, { path: "category" }, { path: "pdfMedia" }];
+const researchPopulate = [{ path: "coverMedia" }, { path: "authors" }, { path: "category" }, { path: "tags" }, { path: "pdfMedia" }];
 const homepageArticlePopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "author", select: "name slug bio" }, { path: "category", select: "name slug description" }];
 const homepageVideoPopulate = [{ path: "thumbnail", select: publicMediaSelect }, { path: "author", select: "name slug bio" }, { path: "category", select: "name slug description" }];
-const homepageResearchPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "authors", select: "name slug bio" }, { path: "category", select: "name slug description" }];
+const homepageResearchPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "authors", select: "name slug bio" }, { path: "category", select: "name slug description" }, { path: "tags", select: "name slug" }];
 const articleListPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "author", select: "name slug bio" }, { path: "category", select: "name slug description" }];
 const videoListPopulate = [{ path: "thumbnail", select: publicMediaSelect }, { path: "author", select: "name slug bio" }, { path: "category", select: "name slug description" }];
-const researchListPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "authors", select: "name slug bio" }, { path: "category", select: "name slug description" }];
+const researchListPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "authors", select: "name slug bio" }, { path: "category", select: "name slug description" }, { path: "tags", select: "name slug" }];
 const collectionArticlePopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "author", select: "name slug bio" }];
 const collectionResearchPopulate = [{ path: "coverMedia", select: publicMediaSelect }, { path: "authors", select: "name slug bio" }];
 const collectionVideoPopulate = [{ path: "thumbnail", select: publicMediaSelect }, { path: "author", select: "name slug bio" }];
@@ -27,15 +28,24 @@ const collectionResearchSelect = "title slug description publishedAt coverMedia 
 const collectionVideoSelect = "title slug description publishedAt thumbnail author";
 const articleListSelect = "title slug excerpt featured publishedAt createdAt updatedAt coverMedia author category readTime";
 const videoListSelect = "title slug description provider sourceType duration featured publishedAt createdAt updatedAt thumbnail author category";
-const researchListSelect = "title slug description coverMedia authors category type featured publishedAt createdAt updatedAt";
+const researchListSelect = "title slug description coverMedia authors tags category type featured publishedAt createdAt updatedAt";
 const homepageArticleSelect = "title slug excerpt featured publishedAt createdAt updatedAt coverMedia author category";
 const homepageVideoSelect = "title slug description thumbnail provider sourceType externalUrl duration featured publishedAt createdAt updatedAt author category";
-const homepageResearchSelect = "title slug description coverMedia authors category type featured publishedAt createdAt updatedAt";
+const homepageResearchSelect = "title slug description coverMedia authors tags category type featured publishedAt createdAt updatedAt";
 const PUBLIC_LIST_REVALIDATE = 120;
 const PUBLIC_DETAIL_REVALIDATE = 300;
 const PUBLIC_HOMEPAGE_REVALIDATE = 60;
 const idOf = (value: unknown) => String((value as { _id?: unknown })?._id ?? value ?? "");
-const dateOf = (value: unknown) => value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString();
+const dateOf = (value: unknown): string => {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return "";
+
+  try {
+    const date = value instanceof Date ? value : new Date(String(value));
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+  } catch {
+    return "";
+  }
+};
 const normalizeSlug = (value: string) => { try { return decodeURIComponent(value).trim(); } catch { return value.trim(); } };
 const uncroppedSourceUrl = (sourceUrl?: string) => sourceUrl?.replace(/([?&])fit=crop(&?)/, "$1fit=max$2");
 const media = (value: unknown): PublicMediaAsset => { const item = value as { _id?: unknown; objectKey?: string; sourceUrl?: string; altText?: string; caption?: string; width?: number; height?: number; variants?: { original?: { objectKey: string; width?: number; height?: number }; presentation16x9?: { objectKey: string; width?: number; height?: number } } }; const variant = item.variants?.presentation16x9; const original = item.variants?.original; const key = variant?.objectKey ?? item.objectKey; const originalKey = original?.objectKey ?? item.objectKey; const sourceUrl = uncroppedSourceUrl(mediaSourceFallback(item.sourceUrl)); const originalUrl = mediaUrlForAsset(originalKey, sourceUrl) ?? ""; const url = mediaUrlForAsset(key, sourceUrl) ?? originalUrl; return { id: idOf(item), url, originalUrl, altText: item.altText ?? "", caption: item.caption, width: variant?.width ?? item.width, height: variant?.height ?? item.height, originalWidth: original?.width ?? item.width, originalHeight: original?.height ?? item.height }; };
@@ -43,7 +53,7 @@ const author = (value: unknown): PublicAuthor => { const item = value as { _id?:
 const category = (value: unknown): PublicCategory => { const item = value as { _id?: unknown; name?: string; slug?: string; description?: string }; return { id: idOf(item), name: item.name ?? "", slug: item.slug ?? "", description: item.description }; };
 const articleDto = (value: unknown): PublicArticle => { const item = value as Record<string, unknown>; const authors = (Array.isArray(item.author) ? item.author : item.author ? [item.author] : []).map(author); const categories = (Array.isArray(item.category) ? item.category : item.category ? [item.category] : []).map(category); return { id: idOf(item), title: String(item.title), slug: String(item.slug), excerpt: String(item.excerpt ?? ""), content: item.content ?? "", featuredImage: media(item.coverMedia), author: authors[0] ?? author({}), authors, category: categories[0] ?? category({}), categories, tags: Array.isArray(item.tags) ? item.tags.map(String) : [], status: "published", featured: Boolean(item.featured), publishedAt: dateOf(item.publishedAt), createdAt: dateOf(item.createdAt), updatedAt: dateOf(item.updatedAt), readTime: item.readTime ? String(item.readTime) : undefined }; };
 const videoDto = (value: unknown): PublicVideo => { const item = value as Record<string, unknown>; const sourceType = item.sourceType as PublicVideo["sourceType"]; const mediaAsset = item.media ? media(item.media) : undefined; const descriptionContent = parseRichText(item.description); return { id: idOf(item), title: String(item.title), slug: String(item.slug), description: richTextPlainText(descriptionContent), descriptionContent, thumbnail: media(item.thumbnail), provider: item.provider as PublicVideo["provider"], sourceType, videoUrl: item.externalUrl ? String(item.externalUrl) : sourceType === "r2" ? mediaAsset?.originalUrl ?? mediaAsset?.url : undefined, duration: item.duration ? String(item.duration) : undefined, author: item.author ? author(item.author) : undefined, category: category(item.category), status: "published", featured: Boolean(item.featured), publishedAt: dateOf(item.publishedAt), createdAt: dateOf(item.createdAt), updatedAt: dateOf(item.updatedAt) }; };
-const researchDto = (value: unknown): PublicResearch => { const item = value as Record<string, unknown>; return { id: idOf(item), title: String(item.title), slug: String(item.slug), description: String(item.description ?? ""), content: item.content ?? "", coverImage: media(item.coverMedia), authors: Array.isArray(item.authors) ? item.authors.map(author) : [], category: category(item.category), type: String(item.type ?? "Research"), status: "published", featured: Boolean(item.featured), publishedAt: dateOf(item.publishedAt), createdAt: dateOf(item.createdAt), updatedAt: dateOf(item.updatedAt), pdfMedia: item.pdfMedia ? media(item.pdfMedia) : undefined }; };
+const researchDto = (value: unknown): PublicResearch => { const item = value as Record<string, unknown>; const tags = Array.isArray(item.tags) ? item.tags.map((tag) => typeof tag === "object" && tag !== null ? String((tag as { name?: unknown }).name ?? "") : String(tag)).filter(Boolean) : []; return { id: idOf(item), title: String(item.title), slug: String(item.slug), description: String(item.description ?? ""), content: item.content ?? "", coverImage: media(item.coverMedia), authors: Array.isArray(item.authors) ? item.authors.map(author) : [], category: category(item.category), tags, type: String(item.type ?? "Research"), status: "published", featured: Boolean(item.featured), publishedAt: dateOf(item.publishedAt), createdAt: dateOf(item.createdAt), updatedAt: dateOf(item.updatedAt), pdfMedia: item.pdfMedia ? media(item.pdfMedia) : undefined }; };
 
 type PublicQueryOptions = { homepage?: boolean; category?: string };
 type PublicContentType = "articles" | "videos" | "research";
@@ -102,6 +112,28 @@ async function getHomepageContent<T>(model: HomepageModel, select: string, popul
   return [...unique.values()].sort((a, b) => String((b as { publishedAt?: string }).publishedAt).localeCompare(String((a as { publishedAt?: string }).publishedAt)));
 }
 
+function featuredReferencesForSnapshot(snapshot: unknown): FeaturedReference[] {
+  const value = snapshot as { featured?: FeaturedReference[]; sections?: unknown[] } | undefined;
+  return value?.featured?.length ? value.featured.map((reference) => ({ type: reference.type, id: String(reference.id) })) : featuredReferencesFromSections(value?.sections ?? []);
+}
+function featuredItemFrom(reference: FeaturedReference, articles: PublicArticle[], research: PublicResearch[], videos: PublicVideo[]): PublicFeaturedItem | null {
+  if (reference.type === "article") { const item = articles.find((value) => value.id === reference.id); return item ? { id: item.id, type: "article", title: item.title, description: item.excerpt, image: item.featuredImage, category: item.category, author: item.author.name, publishedAt: item.publishedAt, href: `/articles/${item.slug}` } : null; }
+  if (reference.type === "research") { const item = research.find((value) => value.id === reference.id); return item ? { id: item.id, type: "research", title: item.title, description: item.description, image: item.coverImage, category: item.category, author: item.authors.map((value) => value.name).join(" · ") || "Jyot Research", publishedAt: item.publishedAt, href: `/research/${item.slug}` } : null; }
+  const item = videos.find((value) => value.id === reference.id); return item ? { id: item.id, type: "video", title: item.title, description: item.description, image: item.thumbnail, category: item.category, author: item.author?.name ?? "Jyot", publishedAt: item.publishedAt, href: `/videos/${item.slug}` } : null;
+}
+async function getFeaturedContent(snapshot: unknown): Promise<PublicFeaturedItem[]> {
+  const references = featuredReferencesForSnapshot(snapshot);
+  const plan = (type: FeaturedReference["type"]): HomepageQueryPlan => ({ ids: references.filter((reference) => reference.type === type).map((reference) => reference.id), latestLimit: 0, categoryLimits: new Map<string, number>() });
+  const [articles, research, videos] = await Promise.all([
+    getHomepageContent(Article, homepageArticleSelect, homepageArticlePopulate, plan("article"), articleDto),
+    getHomepageContent(Research, homepageResearchSelect, homepageResearchPopulate, plan("research"), researchDto),
+    getHomepageContent(Video, homepageVideoSelect, homepageVideoPopulate, plan("video"), videoDto),
+  ]);
+  const byKey = new Map<string, PublicFeaturedItem>();
+  for (const reference of references) { const item = featuredItemFrom(reference, articles, research, videos); if (item) byKey.set(featuredReferenceKey(reference), item); }
+  return references.map((reference) => byKey.get(featuredReferenceKey(reference))).filter((item): item is PublicFeaturedItem => Boolean(item));
+}
+
 async function getHomepageCollections(plan: { ids: string[]; latestLimit?: number }): Promise<PublicCollectionSummary[]> {
   const base = publicFilter();
   const ids = validIds(plan.ids);
@@ -121,7 +153,7 @@ async function getHomepageCollections(plan: { ids: string[]; latestLimit?: numbe
   return values.map((item) => ({ id: idOf(item), title: item.title, slug: item.slug, description: item.description, coverImage: collectionMedia(item.coverImage), curator: item.curator ? author(item.curator) : undefined, itemCount: item.itemCount ?? 0, publishedAt: dateOf(item.publishedAt), updatedAt: dateOf(item.updatedAt), seo: item.seo }));
 }
 async function categoryIdForSlug(slug?: string) { if (!slug) return undefined; const value = await Category.findOne({ slug }).select("_id").lean().exec(); return value?._id; }
-const getPublishedCategoriesCached = unstable_cache(async (type: PublicContentType) => { await connectToDatabase(); const ids = await contentModels[type].distinct("category", publicFilter()); const values = await Category.find({ _id: { $in: ids }, active: { $ne: false } }).select("name slug description").sort({ displayOrder: 1, name: 1 }).lean().exec(); return values.map(category); }, ["public-categories"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-categories"] });
+const getPublishedCategoriesCached = unstable_cache(async (type: PublicContentType) => { await connectToDatabase(); const filter = { _id: { $in: await contentModels[type].distinct("category", publicFilter()) }, active: { $ne: false } }; const values = await Category.find(filter).select("name slug description").sort({ displayOrder: 1, name: 1 }).lean().exec(); return values.map(category); }, ["public-categories"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-categories"] });
 export function getPublishedCategories(type: PublicContentType) { return getPublishedCategoriesCached(type); }
 
 const getPublishedArticlesCached = unstable_cache(async (limit: number | null, categorySlug: string | null, homepage: boolean) => { await connectToDatabase(); const categoryId = await categoryIdForSlug(categorySlug ?? undefined); if (categorySlug && !categoryId) return []; const q = Article.find({ ...publicFilter(), ...(categoryId ? { category: categoryId } : {}) }).sort({ publishedAt: -1 }).select(homepage ? homepageArticleSelect : articleListSelect); if (limit) q.limit(limit); return (await q.populate(homepage ? homepageArticlePopulate : articleListPopulate).lean().exec()).map(articleDto); }, ["public-articles"], { revalidate: PUBLIC_LIST_REVALIDATE, tags: ["public-articles"] });
@@ -186,15 +218,17 @@ async function getHomepageDataUncached(): Promise<PublicHomepageData> {
   const published = (config as unknown as { published?: { sections?: PublicSection[] } } | null)?.published;
   const sections = (published?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order);
   const plan = homepagePlan(sections);
-  const [articles, videos, research, collections, articleCategories, researchCategories] = await Promise.all([
+  const [featured, articles, videos, research, researchExplorer, collections, researchCategories] = await Promise.all([
+    getFeaturedContent(published),
     getHomepageContent(Article, homepageArticleSelect, homepageArticlePopulate, plan.articles, articleDto),
     getHomepageContent(Video, homepageVideoSelect, homepageVideoPopulate, plan.videos, videoDto),
     getHomepageContent(Research, homepageResearchSelect, homepageResearchPopulate, plan.research, researchDto),
+    getPublishedResearch(),
     getHomepageCollections(plan.collections),
-    getPublishedCategories("articles"),
     getPublishedCategories("research"),
   ]);
-  return { config: { sections }, articles, videos, research, collections, articleCategories, researchCategories };
+  return { config: { sections }, featured, articles, videos, research, researchExplorer, collections, researchCategories };
 }
 export const getHomepageData = unstable_cache(getHomepageDataUncached, ["public-homepage"], { revalidate: PUBLIC_HOMEPAGE_REVALIDATE, tags: ["public-homepage", "public-articles", "public-videos", "public-research", "public-collections", "public-categories"] });
-export async function getHomepagePreviewData(): Promise<PublicHomepageData> { const config = await getHomepageConfigForPreview(); const [articles, videos, research, collections, articleCategories, researchCategories] = await Promise.all([getPublishedArticles(), getPublishedVideos(), getPublishedResearch(), getPublishedCollections(), getPublishedCategories("articles"), getPublishedCategories("research")]); const draft = (config as unknown as { draft?: { sections?: PublicSection[] } } | null)?.draft; const sections = (draft?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order); return { config: { sections }, articles, videos, research, collections, articleCategories, researchCategories }; }
+export async function getPublishedFeaturedContent() { const config = await getPublishedHomepageConfig(); const snapshot = (config as unknown as { published?: unknown } | null)?.published; return getFeaturedContent(snapshot); }
+export async function getHomepagePreviewData(): Promise<PublicHomepageData> { const config = await getHomepageConfigForPreview(); const draft = (config as unknown as { draft?: { sections?: PublicSection[] } | unknown } | null)?.draft; const [featured, articles, videos, research, researchExplorer, collections, researchCategories] = await Promise.all([getFeaturedContent(draft), getPublishedArticles(), getPublishedVideos(), getPublishedResearch(), getPublishedResearch(), getPublishedCollections(), getPublishedCategories("research")]); const sections = ((draft as { sections?: PublicSection[] } | undefined)?.sections ?? []).filter((section) => section.enabled).sort((a, b) => a.order - b.order); return { config: { sections }, featured, articles, videos, research, researchExplorer, collections, researchCategories }; }

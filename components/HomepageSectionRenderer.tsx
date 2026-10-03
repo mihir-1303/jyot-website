@@ -1,4 +1,4 @@
-import { FeaturedGrid } from "./FeaturedGrid";
+import { FeaturedContentGrid } from "./FeaturedContentGrid";
 import { CollectionSection } from "./CollectionSection";
 import { Hero } from "./Hero";
 import { InsightsShelf } from "./InsightsShelf";
@@ -20,11 +20,11 @@ export function HomepageSectionRenderer({ section, data }: RendererProps) {
     const stories = selected.length > 1 ? selected : [...selected, ...fallback.filter((item) => !selected.some((story) => story.id === item.id)).slice(0, Math.max(0, 5 - selected.length))];
     return stories.length ? <Hero stories={stories} settings={section.settings} /> : null;
   }
-  if (section.type === "featured") { const stories = selectItems(data.articles, content); return stories.length ? <section className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><FeaturedGrid stories={stories} /></div></section> : null; }
+  if (section.type === "featured") { const items = data.featured.slice(0, 3); return items.length ? <section className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><FeaturedContentGrid items={items} /><SectionViewAll href="/featured" label="View all featured" /></div></section> : null; }
   if (section.type === "articles") { const items = selectItems(categoryItems(data.articles, content?.categoryId), content); return <section id="insights" className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><InsightsShelf articles={items} /><SectionViewAll href="/articles" label="View all articles" /></div></section>; }
   if (section.type === "videos") { const items = selectItems(categoryItems(data.videos, content?.categoryId), content); return <section id="videos" className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><VideoShelf videos={items} /><SectionViewAll href="/videos" label="View all videos" /></div></section>; }
-  if (section.type === "research") { const items = selectItems(categoryItems(data.research, content?.categoryId), content); return <section id="research" className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><ResearchShelf items={items} /><SectionViewAll href="/research" label="View all research" /></div></section>; }
-  if (section.type === "research-explorer") return <ResearchExplorer title={section.title} topics={data.researchCategories} items={selectItems(categoryItems(data.research, content?.categoryId), content)} />;
+  if (section.type === "research") { if (section.id === "featured-research") return null; const items = selectItems(categoryItems(data.research, content?.categoryId), content); return <section id="research" className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><ResearchShelf items={items} /><SectionViewAll href="/research" label="View all research" /></div></section>; }
+  if (section.type === "research-explorer") return <ResearchExplorer title={section.title} topics={data.researchCategories} items={categoryItems(data.researchExplorer, content?.categoryId)} />;
   if (section.type === "topic") { const items = selectItems(categoryItems(data.articles, content?.categoryId), content); return items.length ? <section className="section border-t divider"><div className="page-shell"><SectionHeader title={section.title} /><InsightsShelf articles={items} /><SectionViewAll href="/articles" label="View all articles" /></div></section> : null; }
   if (section.type === "collection") { const collection = selectItems(data.collections, content); return collection[0] ? <CollectionSection title={section.title} collection={collection[0]} /> : null; }
   return null;

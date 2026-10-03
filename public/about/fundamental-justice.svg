@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title desc">
+  <title id="title">Justice</title>
+  <desc id="desc">A simple placeholder illustration for the Justice fundamental.</desc>
+  <rect width="640" height="480" fill="#f7f3ed"/>
+  <g fill="none" stroke="#f4512a" stroke-linecap="round" stroke-linejoin="round" stroke-width="12">
+    <path d="M320 92v248M232 350h176M200 92h240M170 154h300"/>
+    <path d="m170 154-58 104h116zM470 154l-58 104h116z"/>
+    <path d="M112 258c0 34 26 58 58 58s58-24 58-58M412 258c0 34 26 58 58 58s58-24 58-58"/>
+  </g>
+</svg>

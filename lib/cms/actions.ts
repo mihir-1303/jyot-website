@@ -6,6 +6,7 @@ import { requirePermission } from "../permissions";
 import { articleInputSchema, researchInputSchema, videoInputSchema } from "../validations/content";
 import type { Permission } from "../types/domain";
 import { localDateTimeToUtc, validateFutureSchedule } from "../scheduling";
+import { formatValidationIssues } from "./form-errors";
 
 function values(formData: FormData) { return Object.fromEntries([...formData.entries()].map(([key, value]) => [key, typeof value === "string" ? value : ""])); }
 function ids(value: string) { return [...new Set(value.split(",").map((id) => id.trim()).filter(Boolean))]; }
@@ -22,10 +23,10 @@ async function verifyReferences(data: Record<string, unknown>, kind: "article" |
     MediaAsset.countDocuments({ _id: { $in: mediaRefs } }),
     Author.countDocuments({ _id: { $in: authorRefs } }),
     Category.countDocuments({ _id: { $in: Array.isArray(data.category) ? data.category : data.category ? [data.category] : [] } }),
-    kind === "article" ? Tag.countDocuments({ _id: { $in: tagRefs } }) : Promise.resolve(0),
+    kind === "article" || kind === "research" ? Tag.countDocuments({ _id: { $in: tagRefs } }) : Promise.resolve(0),
   ]);
   const categoryRefs = Array.isArray(data.category) ? data.category : data.category ? [data.category] : [];
-  if (mediaCount !== mediaRefs.length || (kind === "article" || kind === "research") && authorCount !== authorRefs.length || categoryCount !== categoryRefs.length || kind === "article" && tagCount !== tagRefs.length) throw new Error("One or more selected references no longer exist.");
+  if (mediaCount !== mediaRefs.length || (kind === "article" || kind === "research") && authorCount !== authorRefs.length || categoryCount !== categoryRefs.length || (kind === "article" || kind === "research") && tagCount !== tagRefs.length) throw new Error("One or more selected references no longer exist.");
 }
 async function save(kind: "article" | "video" | "research", formData: FormData) {
   const permissionBase = kind === "article" ? "articles" : kind === "video" ? "videos" : "research";
@@ -49,9 +50,9 @@ async function save(kind: "article" | "video" | "research", formData: FormData) 
   let data: Record<string, unknown>;
   if (kind === "article") data = { ...common, coverMedia: raw.coverMedia || undefined, author: ids(raw.author), category: ids(raw.category), tags: ids(raw.tags), readTime: raw.readTime || undefined };
   else if (kind === "video") data = { ...common, description: raw.description, thumbnail: raw.thumbnail || undefined, provider: raw.provider || undefined, externalUrl: raw.externalUrl || undefined, duration: raw.duration || undefined, author: raw.author || undefined, category: raw.category, sourceType: raw.sourceType || "external", media: raw.media || undefined };
-  else data = { ...common, description: raw.description || raw.excerpt || "", coverMedia: raw.coverMedia || undefined, pdfMedia: raw.pdfMedia || undefined, authors: ids(raw.authors), category: raw.category, type: raw.type };
+  else data = { ...common, description: raw.description || raw.excerpt || "", coverMedia: raw.coverMedia || undefined, pdfMedia: raw.pdfMedia || undefined, authors: ids(raw.authors), category: raw.category, tags: ids(raw.tags), type: raw.type };
   const parsed = (kind === "article" ? articleInputSchema : kind === "video" ? videoInputSchema : researchInputSchema).safeParse(data);
-  if (!parsed.success) throw new Error(`Invalid content fields: ${parsed.error.issues.map((issue) => issue.message).join(" ")}`);
+  if (!parsed.success) throw new Error(formatValidationIssues(parsed.error.issues, kind));
   await verifyReferences(parsed.data as Record<string, unknown>, kind);
   if (id) {
     const updateData = { ...parsed.data, updatedBy: user.id } as Record<string, unknown>;
@@ -69,3 +70,4 @@ export async function saveArticle(formData: FormData) { return save("article", f
 export async function saveVideo(formData: FormData) { await save("video", formData); }
 export async function saveResearch(formData: FormData) { await save("research", formData); }
 export async function deleteContent(kind: "article" | "video" | "research", id: string) { const permission = `${kind === "article" ? "articles" : kind === "video" ? "videos" : "research"}.delete` as Permission; const user = await requirePermission(permission); await connectToDatabase(); const Model = kind === "article" ? Article : kind === "video" ? Video : Research; const existing = await Model.findById(id).select("createdBy slug").lean() as unknown as { createdBy?: unknown; slug?: string } | null; if (!existing) return; const canDeleteAll = await (async () => { try { await requirePermission(`${kind === "article" ? "articles" : kind === "video" ? "videos" : "research"}.editAll` as Permission); return true; } catch { return false; } })(); if (!canDeleteAll && String(existing.createdBy) !== user.id) throw new Error("Forbidden"); await Model.findByIdAndDelete(id); const publicTag = kind === "article" ? "public-articles" : kind === "video" ? "public-videos" : "public-research"; revalidateTag(publicTag, "max"); revalidateTag("public-homepage", "max"); revalidateTag("public-categories", "max"); const publicPath = `/${kind}`; revalidatePath("/"); revalidatePath(publicPath); revalidatePath(`/admin/${kind}`); if (existing.slug) revalidatePath(`${publicPath}/${existing.slug}`); }
+export async function deleteContentFromForm(formData: FormData) { const kind = String(formData.get("kind") ?? ""); const id = String(formData.get("id") ?? ""); if (!(kind === "article" || kind === "video" || kind === "research") || !id) throw new Error("Content could not be deleted."); return deleteContent(kind, id); }

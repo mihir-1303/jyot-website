@@ -6,7 +6,7 @@ const safeHref = (href: unknown) => typeof href === "string" && /^(https?:\/\/|m
 const imageSizes = { small: "small", medium: "medium", large: "large", full: "full" } as const;
 const imageAlignments = { left: "left", center: "center", right: "right" } as const;
 const imageSize = (value: unknown): keyof typeof imageSizes => typeof value === "string" && value in imageSizes ? value as keyof typeof imageSizes : "large";
-const imageAlign = (value: unknown): keyof typeof imageAlignments => typeof value === "string" && value in imageAlignments ? value as keyof typeof imageAlignments : "center";
+const imageAlign = (value: unknown): keyof typeof imageAlignments => typeof value === "string" && value in imageAlignments ? value as keyof typeof imageAlignments : "left";
 const imageWidth = (attrs: Record<string, unknown> | undefined) => { const value = attrs?.width; if (typeof value === "number" && Number.isFinite(value)) return Math.min(100, Math.max(20, Math.round(value))); const size = imageSize(attrs?.size); return ({ small: 25, medium: 50, large: 75, full: 100 } as Record<string, number>)[size]; };
 export function StructuredContent({ content, media = {} }: { content: unknown; media?: Record<string, PublicMediaAsset> }) {
   const parsedContent = parseRichText(content);

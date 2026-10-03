@@ -16,6 +16,21 @@ function formValues(formData: FormData) {
   return { id: String(formData.get("id") ?? "").trim(), name: String(formData.get("name") ?? "").trim(), slug: String(formData.get("slug") ?? "").trim(), description: String(formData.get("description") ?? "").trim(), displayOrder: Number(formData.get("displayOrder") ?? 0), active: formData.get("active") === "on" };
 }
 
+export async function createResearchTopic(name: string) {
+  const user = await requirePermission("categories.create");
+  await connectToDatabase();
+  const trimmedName = name.trim();
+  const slug = slugify(trimmedName);
+  if (!trimmedName) throw new Error("A topic name is required.");
+  if (await Category.exists({ slug })) throw new Error("That topic already exists. Choose a different name.");
+  const topic = await Category.create({ name: trimmedName, slug, active: true, displayOrder: 0, createdBy: user.id, updatedBy: user.id });
+  revalidateTag("public-categories", "max");
+  revalidateTag("public-research", "max");
+  revalidateTag("public-homepage", "max");
+  revalidatePath("/"); revalidatePath("/research"); revalidatePath("/admin/research/topics");
+  return { id: String(topic._id), name: trimmedName };
+}
+
 export async function saveResearchTopic(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   const user = await requirePermission(id ? "categories.edit" : "categories.create");

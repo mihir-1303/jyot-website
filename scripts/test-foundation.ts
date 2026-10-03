@@ -8,6 +8,8 @@ import { StructuredContent } from "../components/StructuredContent";
 import { canonical, editorialMetadata } from "../lib/seo";
 import { normalizeQuery } from "../lib/search-utils";
 import { localDateTimeToUtc, validateFutureSchedule } from "../lib/scheduling";
+import { featuredReferencesFromSections } from "../lib/featured";
+import { formatValidationIssues, normalizeCmsError } from "../lib/cms/form-errors";
 
 const id = "507f1f77bcf86cd799439011";
 const now = new Date("2026-09-17T00:00:00.000Z");
@@ -21,13 +23,26 @@ const valid = {
   updatedAt: now,
   sections: [
     { id: "hero", type: "hero", title: "Hero", enabled: true, order: 0, content: { mode: "manual", ids: [id] } },
-    { id: "featured", type: "featured", title: "Featured", enabled: true, order: 1, content: { mode: "manual", ids: [id, id, id] } },
+    { id: "featured", type: "featured", title: "Featured", enabled: true, order: 1, content: { mode: "manual", ids: [id, "507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"] } },
     { id: "latest-insights", type: "articles", title: "Insights", enabled: true, order: 2, content: { mode: "latest", limit: 3 } },
     { id: "latest-videos", type: "videos", title: "Videos", enabled: true, order: 3, content: { mode: "latest", limit: 3 } },
     { id: "featured-research", type: "research", title: "Research", enabled: true, order: 4, content: { mode: "manual", ids: [id] } },
   ],
 };
 assert.equal(homepageSnapshotSchema.safeParse(valid).success, true);
+const mixedFeatured = featuredReferencesFromSections([
+  { type: "featured", order: 1, content: { mode: "manual", ids: [id, "507f1f77bcf86cd799439012"] } },
+  { type: "research", order: 2, content: { mode: "manual", ids: ["507f1f77bcf86cd799439013"] } },
+  { type: "videos", order: 3, content: { mode: "manual", ids: ["507f1f77bcf86cd799439014"] } },
+]);
+assert.deepEqual(mixedFeatured, [
+  { type: "article", id },
+  { type: "article", id: "507f1f77bcf86cd799439012" },
+  { type: "research", id: "507f1f77bcf86cd799439013" },
+  { type: "video", id: "507f1f77bcf86cd799439014" },
+]);
+assert.equal(homepageSnapshotSchema.safeParse({ ...valid, featured: mixedFeatured }).success, true);
+assert.equal(homepageSnapshotSchema.safeParse({ ...valid, sections: [...valid.sections, { id: "featured-research-more", type: "research", title: "More Research", enabled: true, order: 5, content: { mode: "manual", ids: [id, "507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"] } }] }).success, true);
 assert.equal(homepageSnapshotSchema.safeParse({ ...valid, sections: [valid.sections[0], { ...valid.sections[0], id: "hero" }] }).success, false);
 assert.equal(homepageSnapshotSchema.safeParse({ ...valid, sections: [{ ...valid.sections[0], id: "unknown", type: "unknown" }] }).success, false);
 
@@ -50,5 +65,7 @@ assert.equal(normalizeQuery(" <script>  climate </script> "), "script  climate /
 assert.equal(normalizeQuery("a"), "a");
 assert.equal(localDateTimeToUtc("2026-09-17T18:30", "Asia/Kolkata").toISOString(), "2026-09-17T13:00:00.000Z");
 assert.throws(() => validateFutureSchedule(new Date("2026-09-16T00:00:00.000Z"), now), /future/);
+assert.equal(formatValidationIssues([{ path: ["title"], message: "Too small" }]), "Title is required. Please enter a title.");
+assert.equal(normalizeCmsError(new Error("E11000 duplicate key error")), "This value is already in use. Please choose a different value.");
 
 console.log("Phase 7 foundation tests passed.");

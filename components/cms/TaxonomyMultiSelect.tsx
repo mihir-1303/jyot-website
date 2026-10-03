@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
+import { FieldError } from "./FormFeedback";
 
 type Option = { id: string; name: string };
 
-export function TaxonomyMultiSelect({ name, label, options, initialValue, placeholder = "Select options...", required = false, single = false }: { name: string; label: string; options: Option[]; initialValue?: string; placeholder?: string; required?: boolean; single?: boolean }) {
+export function TaxonomyMultiSelect({ name, label, options, initialValue, placeholder = "Select options...", required = false, single = false, error }: { name: string; label: string; options: Option[]; initialValue?: string; placeholder?: string; required?: boolean; single?: boolean; error?: string }) {
   const [selected, setSelected] = useState(() => initialValue ? initialValue.split(",").filter(Boolean) : []);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -36,7 +37,7 @@ export function TaxonomyMultiSelect({ name, label, options, initialValue, placeh
     <input type="hidden" name={name} value={selected.join(",")} />
     <div className={`taxonomy-multiselect-trigger ${open ? "taxonomy-multiselect-trigger-open" : ""}`} role="button" tabIndex={0} aria-haspopup="listbox" aria-expanded={open} onClick={toggleOpen} onKeyDown={openWithKeyboard}>
       <span className="taxonomy-multiselect-chips">{selectedOptions.length ? selectedOptions.map((option) => <span className="taxonomy-chip" key={option.id}>{option.name}<button type="button" aria-label={`Remove ${option.name}`} onClick={(event) => removeOption(event, option.id)}>x</button></span>) : <span className="taxonomy-multiselect-placeholder">{placeholder}</span>}</span><span className="taxonomy-multiselect-chevron" aria-hidden="true">v</span>
-    </div>
+    </div><FieldError message={error} id={`error-${name}`} />
     {open && <div className="taxonomy-multiselect-menu" role="listbox" aria-label={label} aria-multiselectable={!single}>
       <input ref={searchRef} className="taxonomy-multiselect-search" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); setOpen(false); } }} placeholder={`Search ${label.toLowerCase()}...`} aria-label={`Search ${label.toLowerCase()}`} />
       <div className="taxonomy-multiselect-options">{filteredOptions.map((option) => <button type="button" role="option" aria-selected={selected.includes(option.id)} className={`taxonomy-multiselect-option ${selected.includes(option.id) ? "taxonomy-multiselect-option-selected" : ""}`} onClick={() => toggleOption(option.id)} key={option.id}><span aria-hidden="true">{selected.includes(option.id) ? "[x]" : single ? "" : "[ ]"}</span>{option.name}</button>)}{!filteredOptions.length && <p className="taxonomy-multiselect-empty">No matching {label.toLowerCase()}.</p>}</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -24,7 +25,7 @@ function Icon({ name }: { name: IconName }) {
 }
 
 const groups = [
-  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Article archive", "/admin/articles/archive", "file"], ["Videos", "/admin/videos", "play"], ["Collections", "/admin/collections", "layers"]] },
+  { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Videos", "/admin/videos", "play"], ["Collections", "/admin/collections", "layers"]] },
   { label: "Research", children: [["All Research", "/admin/research"], ["Topics", "/admin/research/topics"], ["Explore Research", "/admin/research/explore"]] },
   { label: "Media", items: [["Media library", "/admin/media", "image"]] },
   { label: "Site", items: [["Homepage", "/admin/homepage", "home"], ["Authors", "/admin/authors", "users"]] },
@@ -33,17 +34,21 @@ const groups = [
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const isResearch = pathname.startsWith("/admin/research");
+  const [researchOpen, setResearchOpen] = useState(isResearch);
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
+  useEffect(() => { if (!isResearch) return; const timer = window.setTimeout(() => setResearchOpen(true), 0); return () => window.clearTimeout(timer); }, [isResearch]);
   const active = (href: string) => href === "/admin/dashboard" ? pathname === href : pathname.startsWith(href);
+  if (pathname === "/admin/login") return <>{children}</>;
   return <div className="admin-frame">
     <aside id="admin-navigation" className={`admin-sidebar ${open ? "admin-sidebar-open" : ""}`}>
       <div className="admin-brand"><Link href="/admin/dashboard" onClick={() => setOpen(false)}><span className="admin-brand-mark">J</span><span><strong>JYOT</strong><small>Editorial CMS</small></span></Link><button className="admin-mobile-close" type="button" onClick={() => setOpen(false)} aria-label="Close navigation">×</button></div>
-      <nav className="admin-nav" aria-label="CMS navigation">{groups.map((group) => <div className="admin-nav-group" key={group.label}>{"children" in group ? <details open={pathname.startsWith("/admin/research")}><summary className="admin-nav-link admin-nav-group-toggle"><Icon name="book" />{group.label}</summary><div className="admin-nav-subgroup">{group.children.map(([label, href]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}>{label}</Link>)}</div></details> : <><p>{group.label}</p>{group.items.map(([label, href, icon]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}><Icon name={icon} />{label}</Link>)}</>}</div>)}</nav>
-      <div className="admin-sidebar-footer"><Link href="/" target="_blank"><Icon name="external" />View public site</Link><div className="admin-user-chip"><span>AD</span><div><strong>Administrator</strong><small>Content team</small></div></div></div>
+      <nav className="admin-nav" aria-label="CMS navigation">{groups.map((group) => <div className="admin-nav-group" key={group.label}>{"children" in group ? <div className="admin-nav-collapsible"><button id="admin-research-toggle" className={`admin-nav-link admin-nav-group-toggle ${isResearch ? "admin-nav-link-active" : ""}`} type="button" aria-expanded={researchOpen} aria-controls="admin-research-submenu" onClick={() => setResearchOpen((expanded) => !expanded)}><span className="admin-nav-group-label"><Icon name="book" />{group.label}</span><svg className={`admin-nav-chevron ${researchOpen ? "is-open" : ""}`} aria-hidden="true" viewBox="0 0 16 16" focusable="false"><path d="m3.5 6 4.5 4 4.5-4" /></svg></button><div id="admin-research-submenu" className={`admin-nav-subgroup ${researchOpen ? "is-open" : ""}`} aria-hidden={!researchOpen}>{group.children.map(([label, href]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} tabIndex={researchOpen ? 0 : -1} onClick={() => setOpen(false)}>{label}</Link>)}</div></div> : <><p>{group.label}</p>{group.items.map(([label, href, icon]) => <Link className={active(href) ? "admin-nav-link admin-nav-link-active" : "admin-nav-link"} href={href} key={href + label} onClick={() => setOpen(false)}><Icon name={icon} />{label}</Link>)}</>}</div>)}</nav>
+      <div className="admin-sidebar-footer"><Link href="/" target="_blank"><Icon name="external" />View public site</Link><div className="admin-user-chip"><span>AD</span><div><strong>Administrator</strong><small>Content team</small></div><button className="admin-logout" type="button" onClick={() => void signOut({ callbackUrl: "/admin/login" })}>Log out</button></div></div>
     </aside>
     {open && <button className="admin-scrim" type="button" onClick={() => setOpen(false)} aria-label="Close navigation" />}
     <div className="admin-workspace"><header className="admin-topbar"><button className="admin-menu-button" type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="admin-navigation" aria-label="Open navigation"><Icon name="menu" /></button><div className="admin-breadcrumb"><span>Jyot CMS</span><b>/</b><strong>{pathname.split("/")[2] === "dashboard" || !pathname.split("/")[2] ? "Dashboard" : pathname.split("/")[2].replace(/-/g, " ")}</strong></div><div className="admin-topbar-right"><span className="admin-live-dot" /> Production <span className="admin-avatar">AD</span></div></header><main className="admin-main">{children}</main></div>

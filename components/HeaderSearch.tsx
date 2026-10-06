@@ -5,7 +5,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-type Suggestion = { type: "article" | "research" | "video" | "collection"; title: string; slug: string; href: string; image?: { url: string; altText?: string } };
+type Suggestion = { type: "article" | "research" | "video"; title: string; slug: string; href: string; image?: { url: string; altText?: string } };
 
 function SearchIcon() {
   return <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" strokeLinecap="round" /></svg>;
@@ -17,7 +17,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 function escapeRegex(value: string) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
-function typeLabel(type: Suggestion["type"]) { return type === "article" ? "Article" : type === "research" ? "Research" : type === "video" ? "Video" : "Collection"; }
+function typeLabel(type: Suggestion["type"]) { return type === "article" ? "Article" : type === "research" ? "Research" : "Video"; }
 
 export default function HeaderSearch() {
   const router = useRouter();
@@ -67,7 +67,7 @@ export default function HeaderSearch() {
   const selectSuggestion = (href: string) => { close(); router.push(href); };
 
   return <div className={`header-search ${open ? "header-search-open" : ""}`} ref={rootRef}>
-    {open ? <form className="search-inline" role="search" onSubmit={submit}><button type="submit" className="search-inline-submit" aria-label="Submit search"><SearchIcon /></button><input ref={inputRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search articles, research, videos, collections..." aria-label="Search articles, research, videos, collections" aria-controls="header-search-suggestions" /><button type="button" className="search-inline-close" onClick={close} aria-label="Close search">×</button></form> : <button type="button" className="search-action" aria-expanded={open} aria-label="Open search" onClick={() => setOpen(true)}><SearchIcon /><span>Search</span></button>}
+    {open ? <form className="search-inline" role="search" onSubmit={submit}><button type="submit" className="search-inline-submit" aria-label="Submit search"><SearchIcon /></button><input ref={inputRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search articles, research, videos, categories..." aria-label="Search articles, research, videos, categories" aria-controls="header-search-suggestions" /><button type="button" className="search-inline-close" onClick={close} aria-label="Close search">×</button></form> : <button type="button" className="search-action" aria-expanded={open} aria-label="Open search" onClick={() => setOpen(true)}><SearchIcon /><span>Search</span></button>}
     {open && trimmedQuery.length >= 2 && <div id="header-search-suggestions" className="search-suggestions" role="listbox" aria-label="Search suggestions">
       {loading ? <p className="search-suggestions-status">Searching…</p> : suggestions.length ? <>{suggestions.map((item) => <button type="button" className="search-suggestion" role="option" aria-selected="false" key={`${item.type}-${item.slug}`} onClick={() => selectSuggestion(item.href)}><span className="search-suggestion-image">{item.image?.url ? <img src={item.image.url} alt="" /> : <span aria-hidden="true" />}</span><span className="search-suggestion-copy"><span className="search-suggestion-type">{typeLabel(item.type)}</span><span className="search-suggestion-title"><Highlight text={item.title} query={trimmedQuery} /></span></span></button>)}</> : <p className="search-suggestions-status">No results found</p>}
       <button type="button" className="search-suggestions-all" onClick={() => { close(); router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`); }}>View all results <span aria-hidden="true">→</span></button>

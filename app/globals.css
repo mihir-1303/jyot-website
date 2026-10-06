@@ -556,6 +556,9 @@ img { max-width: 100%; }
 .cms-article-media-summary span { margin-top: .3rem; color: var(--foreground); font-size: .78rem; }
 .cms-article-media-summary small, .cms-article-media-note { margin-top: .4rem; color: var(--muted); font-size: .68rem; line-height: 1.5; }
 .cms-article-media-note { margin-bottom: 0; border-top: 1px solid var(--admin-border, var(--line)); padding-top: .8rem; }
+.cms-editor-section { display: block; border: 1px solid var(--admin-border, var(--line)); background: #fff; padding: 1rem; }
+.cms-editor-label { color: var(--admin-ink, var(--foreground)); font-size: .875rem; font-weight: 400; }
+.cms-editor-section > .border { margin-top: .75rem; }
 .cms-modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; background: rgb(23 32 43 / 52%); padding: 1rem; }
 .cms-modal { width: min(100%, 42rem); max-height: calc(100vh - 2rem); overflow-y: auto; border: 1px solid var(--admin-border, var(--line)); background: var(--background); padding: clamp(1.1rem, 3vw, 1.75rem); box-shadow: 0 20px 60px rgb(23 32 43 / 20%); }
 .cms-modal-header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 1rem; }

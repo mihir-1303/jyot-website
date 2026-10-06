@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { VideoPlayer } from "../../../components/VideoPlayer";
-import { CollectionNavigation } from "../../../components/CollectionNavigation";
-import { getCollectionNavigation, getPublishedVideoBySlug } from "../../../lib/data/public";
+import { getPublishedVideoBySlug } from "../../../lib/data/public";
 import { canonical, editorialMetadata } from "../../../lib/seo";
 import { EditorialHeader } from "../../../components/EditorialHeader";
 import { videoToEditorialContent } from "../../../lib/editorial";
@@ -16,7 +15,6 @@ export default async function VideoPage({ params }: Props) {
   const item = await getPublishedVideoBySlug((await params).slug);
   if (!item) notFound();
   const data = { "@context": "https://schema.org", "@type": "VideoObject", name: item.title, description: item.description, thumbnailUrl: item.thumbnail.url, uploadDate: item.publishedAt, url: canonical(`/videos/${item.slug}`), ...(item.videoUrl ? { contentUrl: item.videoUrl } : {}) };
-  const collectionNavigation = await getCollectionNavigation("video", item.id);
   return <ContentDetailLayout breadcrumbs={[{ label: "Videos", href: "/videos" }, { label: item.title }]} jsonLd={data}>
     <div className="article-layout">
       <article className="article-main">
@@ -31,6 +29,5 @@ export default async function VideoPage({ params }: Props) {
         {item.author?.bio && <p className="article-author-bio">{item.author.bio}</p>}
       </aside>
     </div>
-    {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}
   </ContentDetailLayout>;
 }

@@ -31,7 +31,7 @@ export function ResearchTopicPicker({ options: initialOptions, value, error }: {
   };
 
   return <div className="research-topic-picker">
-    <label className="block text-sm">Research Category<span aria-hidden="true" className="required-mark">*</span>
+    <label className="block text-sm">Category<span aria-hidden="true" className="required-mark">*</span>
       <select className="mt-1 w-full border p-3" name="category" value={selected} onChange={(event) => setSelected(event.target.value)} required aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined}>
         <option value="">Select category</option>{options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
       </select>

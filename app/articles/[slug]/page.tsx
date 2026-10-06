@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 import { ArticleCard } from "../../../components/ArticleCard";
 import { EditorialImage } from "../../../components/EditorialImage";
 import { StructuredContent } from "../../../components/StructuredContent";
-import { getCollectionNavigation, getPublishedArticleBySlug, getRelatedPublishedArticles } from "../../../lib/data/public";
+import { getPublishedArticleBySlug, getRelatedPublishedArticles } from "../../../lib/data/public";
 import { canonical, editorialMetadata } from "../../../lib/seo";
-import { CollectionNavigation } from "../../../components/CollectionNavigation";
 import { EditorialHeader } from "../../../components/EditorialHeader";
 import { articleToEditorialContent } from "../../../lib/editorial";
 import { ContentDetailLayout } from "../../../components/ContentDetailLayout";
@@ -23,10 +22,7 @@ export default async function ArticlePage({ params }: Props) {
   const authors = Array.isArray(item.authors) ? item.authors : [];
   const categories = Array.isArray(item.categories) ? item.categories : [];
   const data = { "@context": "https://schema.org", "@type": "Article", headline: item.title, description: item.excerpt, image: item.featuredImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: authors.map((author) => ({ "@type": "Person", name: author.name })), articleSection: categories.map((category) => category.name), mainEntityOfPage: canonical(`/articles/${item.slug}`) };
-  const [related, collectionNavigation] = await Promise.all([
-    getRelatedPublishedArticles(item.id, item.category.id).catch(() => []),
-    getCollectionNavigation("article", item.id),
-  ]);
+  const related = await getRelatedPublishedArticles(item.id, item.category.id).catch(() => []);
   const editorial = articleToEditorialContent(item);
 
   return <ContentDetailLayout breadcrumbs={[{ label: "Articles", href: "/articles" }, { label: item.title }]} jsonLd={data}>
@@ -43,6 +39,6 @@ export default async function ArticlePage({ params }: Props) {
         {item.readTime && <p className="meta article-read-time">{item.readTime}</p>}
       </aside>
     </div>
-    {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}{related.length > 0 && <section className="article-related" aria-labelledby="related-articles"><div className="article-related-heading"><p className="eyebrow">Continue reading</p><h2 id="related-articles" className="serif">Related Articles</h2></div><div className="article-related-grid">{related.map((article) => <ArticleCard article={article} compact key={article.id} />)}</div></section>}
+    {related.length > 0 && <section className="article-related" aria-labelledby="related-articles"><div className="article-related-heading"><p className="eyebrow">Continue reading</p><h2 id="related-articles" className="serif">Related Articles</h2></div><div className="article-related-grid">{related.map((article) => <ArticleCard article={article} compact key={article.id} />)}</div></section>}
   </ContentDetailLayout>;
 }

@@ -8,7 +8,7 @@ const links: HeaderLink[] = [
   { href: "/research", label: "Research" },
   { href: "/articles", label: "Articles" },
   { href: "/videos", label: "Videos" },
-  { href: "/collections", label: "Collections" },
+  { href: "/categories", label: "Categories" },
   { href: "#footer", label: "Events" },
   { href: "/about", label: "About" },
 ];

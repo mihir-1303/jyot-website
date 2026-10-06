@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import { CollectionNavigation } from "../../../components/CollectionNavigation";
 import { ContentDetailLayout } from "../../../components/ContentDetailLayout";
 import { EditorialHeader } from "../../../components/EditorialHeader";
 import { EditorialImage } from "../../../components/EditorialImage";
 import { StructuredContent } from "../../../components/StructuredContent";
-import { getCollectionNavigation, getPublishedResearchBySlug } from "../../../lib/data/public";
+import { getPublishedResearchBySlug } from "../../../lib/data/public";
 import { researchToEditorialContent } from "../../../lib/editorial";
 import { canonical, editorialMetadata } from "../../../lib/seo";
 
@@ -16,7 +15,6 @@ export default async function ResearchDetailPage({ params }: Props) {
   const item = await getPublishedResearchBySlug((await params).slug);
   if (!item) notFound();
   const data = { "@context": "https://schema.org", "@type": "ScholarlyArticle", headline: item.title, description: item.description, image: item.coverImage.url, datePublished: item.publishedAt, dateModified: item.updatedAt, author: item.authors.map((author) => ({ "@type": "Person", name: author.name })), articleSection: item.category.name, mainEntityOfPage: canonical(`/research/${item.slug}`) };
-  const collectionNavigation = await getCollectionNavigation("research", item.id);
   return <ContentDetailLayout breadcrumbs={[{ label: "Research", href: "/research" }, { label: item.title }]} jsonLd={data}>
     <div className="article-layout">
       <article className="article-main">
@@ -32,6 +30,5 @@ export default async function ResearchDetailPage({ params }: Props) {
         <p className="meta article-read-time">{item.category.name}</p>
       </aside>
     </div>
-    {collectionNavigation[0] && <CollectionNavigation {...collectionNavigation[0]} />}
   </ContentDetailLayout>;
 }

@@ -25,7 +25,7 @@ function Icon({ name }: { name: IconName }) {
 
 const groups = [
   { label: "Content", items: [["Dashboard", "/admin/dashboard", "grid"], ["Articles", "/admin/articles", "file"], ["Videos", "/admin/videos", "play"], ["Categories", "/admin/categories", "tag"]] },
-  { label: "Research", children: [["All Research", "/admin/research"], ["Topics", "/admin/research/topics"], ["Explore Research", "/admin/research/explore"]] },
+  { label: "Research", children: [["All Research", "/admin/research"], ["Topics", "/admin/research/topics"]] },
   { label: "Media", items: [["Media library", "/admin/media", "image"]] },
   { label: "Site", items: [["Homepage", "/admin/homepage", "home"], ["Authors", "/admin/authors", "users"]] },
 ] as const;

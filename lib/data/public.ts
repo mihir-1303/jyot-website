@@ -112,6 +112,18 @@ async function getHomepageContent<T>(model: HomepageModel, select: string, popul
   return [...unique.values()].sort((a, b) => String((b as { publishedAt?: string }).publishedAt).localeCompare(String((a as { publishedAt?: string }).publishedAt)));
 }
 
+async function getResearchExplorerContent(snapshot: unknown): Promise<PublicResearch[]> {
+  const sections = (snapshot as { sections?: PublicSection[] } | undefined)?.sections ?? [];
+  const section = sections.find((item) => item.type === "research-explorer");
+  const content = section?.content;
+  const configuredIds = content?.mode === "manual" ? (content.topicSelections?.flatMap((selection) => selection.ids) ?? content.ids ?? []) : [];
+  const ids = [...new Set(configuredIds.map(String))].filter((id) => /^[a-f\d]{24}$/i.test(id));
+  if (!ids.length) return getPublishedResearch();
+  const values = await Research.find({ ...publicFilter(), _id: { $in: ids } }).select(homepageResearchSelect).populate(homepageResearchPopulate).lean().exec();
+  const mapped = new Map((values as unknown[]).map((value) => { const item = researchDto(value); return [item.id, item]; }));
+  return ids.map((id) => mapped.get(id)).filter((item): item is PublicResearch => Boolean(item));
+}
+
 function featuredReferencesForSnapshot(snapshot: unknown): FeaturedReference[] {
   const value = snapshot as { featured?: FeaturedReference[]; sections?: unknown[] } | undefined;
   return value?.featured?.length ? value.featured.map((reference) => ({ type: reference.type, id: String(reference.id) })) : featuredReferencesFromSections(value?.sections ?? []);
@@ -223,7 +235,7 @@ async function getHomepageDataUncached(): Promise<PublicHomepageData> {
     getHomepageContent(Article, homepageArticleSelect, homepageArticlePopulate, plan.articles, articleDto),
     getHomepageContent(Video, homepageVideoSelect, homepageVideoPopulate, plan.videos, videoDto),
     getHomepageContent(Research, homepageResearchSelect, homepageResearchPopulate, plan.research, researchDto),
-    getPublishedResearch(),
+    getResearchExplorerContent(published),
     getHomepageCollections(plan.collections),
     getPublishedCategories("research"),
   ]);

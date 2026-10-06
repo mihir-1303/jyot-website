@@ -14,6 +14,8 @@ const featuredContentSchema = z.object({ mode: z.literal("manual"), ids: z.array
   if (new Set(keys).size !== keys.length) ctx.addIssue({ code: "custom", message: "Featured content IDs must be unique." });
 });
 export const latestContentSchema = z.object({ mode: z.literal("latest"), limit: z.number().int().min(1).max(12), categoryId: objectIdSchema.optional(), tagIds: z.array(objectIdSchema).optional() }).strict();
+const researchExplorerTopicSelectionSchema = z.object({ categoryId: z.union([z.literal("all"), objectIdSchema]), ids: z.array(objectIdSchema).min(1).max(100) }).strict();
+export const researchExplorerContentSchema = z.object({ mode: z.literal("manual"), ids: z.array(objectIdSchema).min(1).max(200), topicSelections: z.array(researchExplorerTopicSelectionSchema).min(1).max(100).optional() }).strict();
 export const sectionContentSchema = z.discriminatedUnion("mode", [manualContentSchema, latestContentSchema]);
 const baseSection = { id: z.string().min(1).max(80), title: z.string().min(1).max(120), enabled: z.boolean(), order: z.number().int().min(0), settings: sectionSettingsSchema.optional() };
 export const homepageSectionSchema = z.discriminatedUnion("type", [
@@ -22,7 +24,7 @@ export const homepageSectionSchema = z.discriminatedUnion("type", [
   z.object({ ...baseSection, type: z.literal("articles"), content: sectionContentSchema }),
   z.object({ ...baseSection, type: z.literal("videos"), content: sectionContentSchema }),
   z.object({ ...baseSection, type: z.literal("research"), content: sectionContentSchema }),
-  z.object({ ...baseSection, type: z.literal("research-explorer"), content: latestContentSchema }),
+  z.object({ ...baseSection, type: z.literal("research-explorer"), content: z.union([researchExplorerContentSchema, latestContentSchema]) }),
   z.object({ ...baseSection, type: z.literal("topic"), content: sectionContentSchema }),
   z.object({ ...baseSection, type: z.literal("collection"), content: manualContentSchema }),
 ]);

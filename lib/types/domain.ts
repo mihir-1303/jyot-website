@@ -3,7 +3,7 @@ export type Id = string;
 export const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "VIEWER", "CONTRIBUTOR"] as const;
 export type Role = (typeof ROLES)[number];
 
-export const RESOURCES = ["articles", "videos", "research", "collections", "media", "homepage", "authors", "categories", "tags", "users", "roles", "settings"] as const;
+export const RESOURCES = ["articles", "videos", "research", "media", "homepage", "authors", "categories", "tags", "users", "roles", "settings"] as const;
 export type Resource = (typeof RESOURCES)[number];
 export type PermissionAction = "create" | "read" | "edit" | "editOwn" | "editAll" | "publish" | "delete" | "upload" | "editMetadata" | "view" | "disable";
 export type Permission = `${Resource}.${PermissionAction}`;

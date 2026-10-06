@@ -1,9 +1,0 @@
-import { CollectionForm } from "../../../../components/cms/CollectionForm";
-import { saveCollection } from "../../../../lib/cms/collection-actions";
-import { getAdminCollectionEditor } from "../../../../lib/data/admin";
-import { requirePermission } from "../../../../lib/permissions";
-import { mediaUrlForAsset } from "../../../../lib/media-url";
-
-const serialize = (value: unknown) => JSON.parse(JSON.stringify(value));
-const mediaUrl = (value: unknown) => { const item = value as { sourceUrl?: string; objectKey?: string; variants?: { presentation16x9?: { objectKey?: string } } } | undefined; return mediaUrlForAsset(item?.variants?.presentation16x9?.objectKey ?? item?.objectKey, item?.sourceUrl) ?? ""; };
-export default async function NewCollectionPage() { await requirePermission("collections.create"); const data = await getAdminCollectionEditor(); const candidates = { articles: data.articles.map((item) => ({ id: String(item._id), title: item.title, image: mediaUrl(item.coverMedia), author: (item.author as { name?: string })?.name, publishedAt: item.publishedAt })), research: data.research.map((item) => ({ id: String(item._id), title: item.title, image: mediaUrl(item.coverMedia), author: Array.isArray(item.authors) ? item.authors.map((author) => (author as { name?: string }).name).filter(Boolean).join(" · ") : "", publishedAt: item.publishedAt })), videos: data.videos.map((item) => ({ id: String(item._id), title: item.title, image: mediaUrl(item.thumbnail), author: (item.author as { name?: string })?.name, publishedAt: item.publishedAt })), authors: data.authors.map((item) => ({ id: String(item._id), name: item.name })) }; return <main><h1 className="serif mb-8 text-5xl">New collection</h1><CollectionForm action={saveCollection} candidates={serialize(candidates)} showCollectionWorkflow={false} defaultStatus="published" /></main>; }

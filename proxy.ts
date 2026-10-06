@@ -13,7 +13,7 @@ function safeDestination(request: NextRequest) {
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (path !== "/admin" && !path.startsWith("/admin/")) return NextResponse.next();
-  const bypass = (process.env.NODE_ENV === "development" && process.env.CMS_LOCAL_DEV_BYPASS === "true") || process.env.CMS_TEMP_BYPASS === "true";
+  const bypass = (process.env.NODE_ENV === "development" && process.env.CMS_LOCAL_DEV_BYPASS === "true") || (process.env.NODE_ENV === "development" && process.env.CMS_TEMP_BYPASS === "true");
   const loggedIn = bypass || hasSessionCookie(request);
   if (path === "/admin/login") return loggedIn ? NextResponse.redirect(new URL(safeDestination(request), request.url)) : NextResponse.next();
   if (!loggedIn) {

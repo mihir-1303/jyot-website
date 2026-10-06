@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-export type ContentPickerItem = { id: string; title: string; type: "article" | "video" | "research" | "collection"; image?: string; status?: string; publishedAt?: string };
+export type ContentPickerItem = { id: string; title: string; type: "article" | "video" | "research"; image?: string; status?: string; publishedAt?: string };
 
 type Props = { open: boolean; items: ContentPickerItem[]; selectedIds: string[]; onClose: () => void; onConfirm: (ids: string[]) => void; title: string; allowedTypes?: ContentPickerItem["type"][] };
 
-const typeLabels: Record<ContentPickerItem["type"], string> = { article: "Articles", video: "Videos", research: "Research", collection: "Collections" };
+const typeLabels: Record<ContentPickerItem["type"], string> = { article: "Articles", video: "Videos", research: "Research" };
 
 export function ContentPickerModal({ open, items, selectedIds, onClose, onConfirm, title, allowedTypes }: Props) {
   const [draftIds, setDraftIds] = useState(selectedIds);

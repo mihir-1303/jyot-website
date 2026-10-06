@@ -1,5 +1,5 @@
 export const cmsFieldLabels: Record<string, string> = {
-  title: "Title", slug: "URL Slug", excerpt: "Excerpt", content: "Content", description: "Description", coverMedia: "Cover Image", coverImage: "Cover Image", thumbnail: "Thumbnail", category: "Category", tags: "Tags", author: "Author", authors: "Authors", type: "Research Type", externalUrl: "Video URL", sourceType: "Source Type", name: "Name", bio: "Biography", photo: "Profile Image", items: "Collection Stories", itemIds: "Collection Stories", scheduledLocal: "Scheduled Date & Time", archiveReason: "Archive Reason", configuration: "Homepage configuration",
+  title: "Title", slug: "URL Slug", excerpt: "Excerpt", content: "Content", description: "Description", coverMedia: "Cover Image", coverImage: "Cover Image", thumbnail: "Thumbnail", category: "Category", tags: "Tags", author: "Author", authors: "Authors", type: "Research Type", externalUrl: "Video URL", sourceType: "Source Type", name: "Name", bio: "Biography", photo: "Profile Image", scheduledLocal: "Scheduled Date & Time", archiveReason: "Archive Reason", configuration: "Homepage configuration",
 };
 
 export function cmsLabel(field: string) { return cmsFieldLabels[field] ?? field.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()); }
@@ -26,7 +26,6 @@ export function humanValidationMessage(path: PropertyKey[], issueMessage: string
   if (field === "author") return "Author is required. Please select an author.";
   if (field === "authors") return "At least one author is required. Please select an author.";
   if (field === "type") return "Research type is required. Please enter a research type.";
-  if (field === "items") return "Please add at least one published story to this collection.";
   return issueMessage.replace(/Expected string, received .+/i, "Please enter a value.").replace(/^Invalid input$/i, "Please review this field.");
 }
 
@@ -73,18 +72,17 @@ export function normalizeCmsErrorDetails(cause: unknown, kind?: string, fallback
 const valueOf = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? "").trim();
 const hasContent = (value: string) => { if (!value) return false; try { const parsed = JSON.parse(value) as { content?: unknown[] }; return Array.isArray(parsed.content) ? parsed.content.some((node) => { const item = node as { type?: string; text?: string; content?: unknown[] }; return item.type === "image" || Boolean(item.text?.trim()) || Boolean(item.content?.length); }) : Boolean(value.trim()); } catch { return value.replace(/<[^>]*>/g, "").trim().length > 0; } };
 
-export function validateCmsForm(form: HTMLFormElement, kind: "article" | "video" | "research" | "collection" | "author" | "topic", publishing = false): CmsValidation {
+export function validateCmsForm(form: HTMLFormElement, kind: "article" | "video" | "research" | "author" | "topic" | "category", publishing = false): CmsValidation {
   const errors: CmsFieldErrors = {};
   const requireValue = (field: string, message: string) => { if (!valueOf(form, field)) errors[field] = message; };
-  if (kind === "author" || kind === "topic") { requireValue("name", `${cmsLabel("name")} is required. Please enter a name.`); }
-  if (kind === "article" || kind === "video" || kind === "research" || kind === "collection") {
+  if (kind === "author" || kind === "topic" || kind === "category") { requireValue("name", `${cmsLabel("name")} is required. Please enter a name.`); }
+  if (kind === "article" || kind === "video" || kind === "research") {
     requireValue("title", "Title is required. Please enter a title.");
     const slug = valueOf(form, "slug"); if (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) errors.slug = "URL slug can only contain lowercase letters, numbers, and hyphens.";
   }
   if (kind === "article") { requireValue("excerpt", "Excerpt is required. Please provide a short summary."); requireValue("author", "Author is required. Please select an author."); requireValue("category", "Category is required. Please select a category."); if (publishing && !valueOf(form, "coverMedia")) errors.coverMedia = "Cover image is required to publish this article. Please select an image from the Media Library."; if (!hasContent(valueOf(form, "content"))) errors.content = "Content is required. Please add some content before saving."; }
   if (kind === "video") { requireValue("category", "Category is required. Please select a category."); if (!hasContent(valueOf(form, "description"))) errors.description = "Description is required. Please add a description before saving."; if (valueOf(form, "sourceType") === "external" && valueOf(form, "externalUrl") && !/^https?:\/\//i.test(valueOf(form, "externalUrl"))) errors.externalUrl = "Please enter a valid video URL starting with http:// or https://."; }
   if (kind === "research") { if (!valueOf(form, "title")) errors.title = "Title is required. Please enter a title for this research."; requireValue("description", "Description is required. Please enter a description for this research."); requireValue("category", "Research topic is required. Please select a topic."); requireValue("type", "Research type is required. Please enter a research type."); if (!hasContent(valueOf(form, "content"))) errors.content = "Content is required. Please add the research content."; }
-  if (kind === "collection") { requireValue("description", "Description is required. Please enter a description."); }
   if (publishing && valueOf(form, "status") === "scheduled" && !valueOf(form, "scheduledLocal")) errors.scheduledLocal = "Scheduled date and time are required when publishing is scheduled.";
   return { fieldErrors: errors, formError: Object.keys(errors).length ? `Please fix the following before ${publishing ? "publishing" : "continuing"}.` : undefined };
 }

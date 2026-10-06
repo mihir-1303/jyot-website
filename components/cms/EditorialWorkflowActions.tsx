@@ -20,7 +20,7 @@ export function EditorialWorkflowActions({ action, deleteAction, contentId = "",
   const setStatus = (next: string) => { setCurrentStatus(next); formRef.current?.querySelectorAll<HTMLInputElement>('[name="status"]').forEach((field) => { field.value = next; }); };
   const submit = async (next: "draft" | "published" | "scheduled" | "review" | "archived") => {
     if (!formRef.current || pending) return;
-    const validation = validateCmsForm(formRef.current, label as "article" | "video" | "research" | "collection", next !== "draft");
+    const validation = validateCmsForm(formRef.current, label as "article" | "video" | "research", next !== "draft");
     if (Object.keys(validation.fieldErrors).length) { setError(Object.values(validation.fieldErrors).join(" ")); const first = Object.keys(validation.fieldErrors)[0]; const target = formRef.current.querySelector<HTMLElement>(`[name="${first}"]`); target?.scrollIntoView({ behavior: "smooth", block: "center" }); target?.focus(); return; }
     if (next === "scheduled" && !(formRef.current.elements.namedItem("scheduledLocal") as HTMLInputElement | null)?.value) { setError("Scheduled date and time are required."); return; }
     setStatus(next); setPending(true); setMenuOpen(false);

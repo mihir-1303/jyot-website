@@ -14,7 +14,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 // Temporary CMS access: disabled by default and enabled only by explicit environment flags.
 export function isLocalCmsBypassEnabled() { return process.env.NODE_ENV === "development" && process.env.CMS_LOCAL_DEV_BYPASS === "true"; }
-export function isTemporaryCmsBypassEnabled() { return process.env.CMS_TEMP_BYPASS === "true"; }
+export function isTemporaryCmsBypassEnabled() { return process.env.NODE_ENV === "development" && process.env.CMS_TEMP_BYPASS === "true"; }
 export function isCmsBypassEnabled() { return isLocalCmsBypassEnabled() || isTemporaryCmsBypassEnabled(); }
 export const localCmsUser = { id: "000000000000000000000001", name: "Local CMS Developer", email: "local-cms@localhost", role: "ADMIN" as const };
 export async function getCurrentUser() { if (isCmsBypassEnabled()) return localCmsUser; const session = await auth(); return session?.user ?? null; }

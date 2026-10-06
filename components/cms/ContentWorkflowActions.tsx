@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { normalizeCmsError, validateCmsForm } from "../../lib/cms/form-errors";
 
-type ContentKind = "video" | "research" | "collection";
+type ContentKind = "video" | "research";
 
 export function ContentWorkflowActions({ action, kind }: { action: (formData: FormData) => Promise<unknown>; kind: ContentKind }) {
   const [choice, setChoice] = useState(""); const [pending, setPending] = useState(false); const [feedback, setFeedback] = useState(""); const [error, setError] = useState(""); const formRef = useRef<HTMLFormElement | null>(null); const label = kind[0].toUpperCase() + kind.slice(1);
